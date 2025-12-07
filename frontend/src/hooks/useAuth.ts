@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 
 interface User {
 
-            const response = await fetch(buildApiUrl('/auth/profile', {
+            const response = await fetch(buildApiUrl(''), {
     headers: {
         Authorization: `Bearer ${token}`,
     },

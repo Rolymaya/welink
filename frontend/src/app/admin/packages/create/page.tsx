@@ -48,7 +48,7 @@ export default function CreatePackagePage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl('/packages', {
+            const response = await fetch(buildApiUrl(''), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

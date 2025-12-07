@@ -46,7 +46,7 @@ export default function PackagesPage() {
     const fetchPackages = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl('/packages', {
+            const response = await fetch(buildApiUrl(''), {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -69,7 +69,7 @@ export default function PackagesPage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl(`"/packages/${id}`, {
+            const response = await fetch(buildApiUrl(`"/packages/${id}`)), {
                 method: 'DELETE',
                 headers: {
                     Authorization: `Bearer ${token}`,

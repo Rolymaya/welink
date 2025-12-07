@@ -53,7 +53,7 @@ export default function SubscriptionsPage() {
     const fetchSubscriptions = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl('/subscriptions', {
+            const response = await fetch(buildApiUrl(''), {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -74,7 +74,7 @@ export default function SubscriptionsPage() {
     const handleApprove = async (id: string) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl(`"/subscriptions/${id}/approve`, {
+            const response = await fetch(buildApiUrl(`"/subscriptions/${id}/approve`)), {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -98,7 +98,7 @@ export default function SubscriptionsPage() {
     const handleReject = async (id: string) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl(`"/subscriptions/${id}/approve`, {
+            const response = await fetch(buildApiUrl(`"/subscriptions/${id}/approve`)), {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -271,7 +271,7 @@ export default function SubscriptionsPage() {
                                         <TableCell>
                                             {sub.paymentProofUrl ? (
                                                 <a
-                                                    href={buildApiUrl(`"${sub.paymentProofUrl}`}
+                                                    href={buildApiUrl(`"${sub.paymentProofUrl}`)}
                                                     download
                                                     className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
                                                 >
