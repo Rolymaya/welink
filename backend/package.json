@@ -64,10 +64,10 @@
     "rxjs": "^7.8.1",
     "socket.io": "^4.7.4",
     "uuid": "^13.0.0",
-    "weaviate-ts-client": "^2.2.0"
+    "weaviate-ts-client": "^2.2.0",
+    "@nestjs/cli": "^10.0.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
     "@types/axios": "^0.9.36",
