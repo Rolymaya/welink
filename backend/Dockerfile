@@ -1,5 +1,8 @@
-# Use Node.js 20 LTS
-FROM node:20-alpine AS builder
+# Use Node.js 20 LTS with Debian (has OpenSSL 3.x for Prisma)
+FROM node:20-slim AS builder
+
+# Install OpenSSL for Prisma
+RUN apt-get update -y && apt-get install -y openssl
 
 # Set working directory
 WORKDIR /app
@@ -21,7 +24,10 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine
+FROM node:20-slim
+
+# Install OpenSSL for Prisma
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
