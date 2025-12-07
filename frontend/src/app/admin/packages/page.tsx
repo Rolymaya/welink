@@ -68,7 +68,7 @@ export default function PackagesPage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl(`"/packages/${id}`)), {
+            const response = await fetch(buildApiUrl(`/packages/${id}`), {
                 method: 'DELETE',
                 headers: {
                     Authorization: `Bearer ${token}`,

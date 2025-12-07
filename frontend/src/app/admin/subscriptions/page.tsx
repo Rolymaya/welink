@@ -73,7 +73,7 @@ export default function SubscriptionsPage() {
     const handleApprove = async (id: string) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl(`"/subscriptions/${id}/approve`)), {
+            const response = await fetch(buildApiUrl(`/subscriptions/${id}/approve`), {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ export default function SubscriptionsPage() {
     const handleReject = async (id: string) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl(`"/subscriptions/${id}/approve`)), {
+            const response = await fetch(buildApiUrl(`/subscriptions/${id}/approve`), {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
