@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # MySQL - Main Database
+  # MySQL - Main Database (Disabled for Laragon)
+  # mysql:
+  #   image: mysql:8.0
+  #   container_name: saas_mysql
+  #   restart: always
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ''
+  #     MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+  #     MYSQL_DATABASE: saas_db
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #   networks:
+  #     - saas_network
+
+  # Redis - Cache & Message Queue
+  redis:
+    image: redis:7-alpine
+    container_name: saas_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - saas_network
+
+  # Weaviate - Vector Database
+  weaviate:
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8080'
+      - --scheme
+      - http
+    image: semitechnologies/weaviate:1.24.1
+    container_name: saas_weaviate
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      # SECURITY: Disable anonymous access for production
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'false'
+      AUTHENTICATION_APIKEY_ENABLED: 'true'
+      AUTHENTICATION_APIKEY_ALLOWED_KEYS: 'your-secure-weaviate-api-key-change-this'
+      AUTHENTICATION_APIKEY_USERS: 'admin'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'none'
+      ENABLE_MODULES: ''
+      CLUSTER_HOSTNAME: 'node1'
+    networks:
+      - saas_network
+
+volumes:
+  mysql_data:
+  redis_data:
+  weaviate_data:
+
+
+networks:
+  saas_network:
+    driver: bridge

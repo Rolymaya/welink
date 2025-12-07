@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE `organization` ADD COLUMN `maxAgents` INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN `maxContacts` INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN `maxSessions` INTEGER NOT NULL DEFAULT 0;

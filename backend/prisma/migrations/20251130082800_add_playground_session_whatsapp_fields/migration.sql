@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `playgroundsession` ADD COLUMN `qrCode` TEXT NULL,
+    ADD COLUMN `status` VARCHAR(191) NOT NULL DEFAULT 'DISCONNECTED';

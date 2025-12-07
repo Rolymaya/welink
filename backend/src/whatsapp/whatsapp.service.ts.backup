@@ -1,0 +1,229 @@
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import makeWASocket, { DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
+import { Boom } from '@hapi/boom';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as qrcode from 'qrcode';
+import { PrismaService } from '../prisma/prisma.service';
+import { AgentService } from '../agent/agent.service';
+import { KnowledgeService } from '../knowledge/knowledge.service';
+import { LLMProviderService } from '../super-admin/llm-provider.service';
+import { LLMService } from '../llm/llm.service';
+
+@Injectable()
+export class WhatsAppService implements OnModuleInit {
+    private sessions = new Map<string, any>(); // sessionId -> socket
+
+    constructor(
+        private prisma: PrismaService,
+        private agentService: AgentService,
+        private knowledgeService: KnowledgeService,
+        private llmProviderService: LLMProviderService,
+        private llmService: LLMService,
+    ) { }
+
+    async onModuleInit() {
+        // Auto-restore all CONNECTED sessions on startup
+        console.log('[WhatsApp] Auto-restoring connected sessions...');
+        const connectedSessions = await this.prisma.session.findMany({
+            where: { status: 'CONNECTED' },
+        });
+
+        for (const session of connectedSessions) {
+            try {
+                console.log(`[WhatsApp] Restoring session: ${session.id}`);
+                await this.createSession(session.id);
+            } catch (error) {
+                console.error(`[WhatsApp] Failed to restore session ${session.id}:`, error);
+            }
+        }
+
+        console.log(`[WhatsApp] Restored ${connectedSessions.length} session(s)`);
+    }
+
+    async createSession(sessionId: string) {
+        const sessionDir = path.join(__dirname, '../../sessions', sessionId);
+        if (!fs.existsSync(sessionDir)) {
+            fs.mkdirSync(sessionDir, { recursive: true });
+        }
+
+        const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
+        const { version } = await fetchLatestBaileysVersion();
+
+        const sock = makeWASocket({
+            version,
+            auth: state,
+            printQRInTerminal: false,
+            browser: ['SaaS AI Agent', 'Chrome', '1.0.0'],
+        });
+
+        this.sessions.set(sessionId, sock);
+
+        sock.ev.on('creds.update', saveCreds);
+
+        sock.ev.on('connection.update', async (update) => {
+            const { connection, lastDisconnect, qr } = update;
+
+            if (qr) {
+                // Update session with QR code
+                const qrCodeData = await qrcode.toDataURL(qr);
+                await this.prisma.session.update({
+                    where: { id: sessionId },
+                    data: { qrCode: qrCodeData, status: 'QR_READY' },
+                });
+            }
+
+            if (connection === 'close') {
+                const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+                console.log('connection closed due to ', lastDisconnect?.error, ', reconnecting ', shouldReconnect);
+                if (shouldReconnect) {
+                    this.createSession(sessionId);
+                } else {
+                    await this.prisma.session.update({
+                        where: { id: sessionId },
+                        data: { status: 'DISCONNECTED' },
+                    });
+                    this.sessions.delete(sessionId);
+                }
+            } else if (connection === 'open') {
+                console.log('opened connection');
+                await this.prisma.session.update({
+                    where: { id: sessionId },
+                    data: { status: 'CONNECTED', qrCode: null },
+                });
+            }
+        });
+
+        sock.ev.on('messages.upsert', async (m) => {
+            if (m.type === 'notify') {
+                for (const msg of m.messages) {
+                    if (!msg.key.fromMe) {
+                        console.log('replying to', msg.key.remoteJid);
+                        // Handle message logic here (Call AI, etc.)
+                        // await sock.sendMessage(msg.key.remoteJid!, { text: 'Hello from AI Agent!' });
+                        this.handleIncomingMessage(sessionId, msg);
+                    }
+                }
+            }
+        });
+        console.log('[WhatsApp] Step 1: Finding session and agent...');
+        const session = await this.prisma.session.findUnique({
+            where: { id: sessionId },
+            include: { agent: { include: { organization: true } } },
+        });
+
+        if (!session || !session.agent) {
+            console.error(`[WhatsApp] Session or Agent not found for sessionId: ${sessionId}`);
+            return;
+        }
+
+        console.log('[WhatsApp] Found session and agent:', {
+            sessionId: session.id,
+            agentId: session.agent.id,
+            agentName: session.agent.name,
+            orgId: session.agent.organizationId,
+        });
+
+        const whatsappNumber = remoteJid.split('@')[0];
+        const organizationId = session.agent.organizationId;
+
+        // 2. Find or create Contact
+        console.log('[WhatsApp] Step 2: Finding or creating contact...');
+        let contact = await this.prisma.contact.findFirst({
+            where: {
+                phone: whatsappNumber,
+                organizationId,
+            },
+        });
+
+        if (!contact) {
+            console.log(`[WhatsApp] Creating new contact: ${whatsappNumber}`);
+            contact = await this.prisma.contact.create({
+                data: {
+                    phone: whatsappNumber,
+                    name: msg.pushName || 'Unknown',
+                    organizationId,
+                    tags: '', // Empty string for MySQL
+                },
+            });
+        }
+
+        console.log('[WhatsApp] Contact found/created:', contact.id);
+
+        // 3. Save incoming message
+        console.log('[WhatsApp] Step 3: Saving incoming message...');
+        await this.prisma.message.create({
+            data: {
+                content: text,
+                role: 'USER',
+                sessionId,
+                contactId: contact.id,
+            },
+        });
+        console.log('[WhatsApp] Incoming message saved');
+
+        // 4. Get active LLM Provider
+        console.log('[WhatsApp] Step 4: Getting active LLM provider...');
+        const provider = await this.llmProviderService.getActiveProvider();
+        if (!provider) {
+            console.error('[WhatsApp] No active LLM provider found');
+            return;
+        }
+
+        console.log('[WhatsApp] Active LLM provider:', {
+            provider: provider.provider,
+            model: provider.model,
+        });
+
+        // 5. Generate AI response
+        console.log('[WhatsApp] Step 5: Generating AI response...');
+        try {
+            const aiResponse = await this.llmService.generateResponse(
+                provider,
+                session.agent.prompt,
+                text,
+            );
+
+            console.log('[WhatsApp] AI response generated:', aiResponse.substring(0, 100) + '...');
+
+            // 6. Send response via WhatsApp
+            console.log('[WhatsApp] Step 6: Sending response via WhatsApp...');
+            const sock = this.sessions.get(sessionId);
+            if (sock) {
+                await sock.sendMessage(remoteJid, { text: aiResponse });
+                console.log(`[WhatsApp] Sent AI response to ${remoteJid}`);
+
+                // 7. Save outgoing message
+                console.log('[WhatsApp] Step 7: Saving outgoing message...');
+                await this.prisma.message.create({
+                    data: {
+                        content: aiResponse,
+                        role: 'ASSISTANT',
+                        sessionId,
+                        contactId: contact.id,
+                    },
+                });
+                console.log('[WhatsApp] Outgoing message saved');
+            } else {
+                console.error('[WhatsApp] Socket not found for sessionId:', sessionId);
+            }
+        } catch (error) {
+            console.error('[WhatsApp] Error generating AI response:', error);
+            console.error('[WhatsApp] Error stack:', error.stack);
+            // Fallback response
+            const sock = this.sessions.get(sessionId);
+            if (sock) {
+                await sock.sendMessage(remoteJid, {
+                    text: 'Desculpe, estou com dificuldades técnicas no momento. Tente novamente em breve.',
+                });
+            }
+        }
+
+        console.log('[WhatsApp] ========== FINISHED PROCESSING ==========');
+    }
+
+    async getSessionStatus(sessionId: string) {
+        const session = await this.prisma.session.findUnique({ where: { id: sessionId } });
+        return session;
+    }
+}

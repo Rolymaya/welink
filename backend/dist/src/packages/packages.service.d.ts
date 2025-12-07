@@ -1,0 +1,97 @@
+import { PrismaService } from '../prisma/prisma.service';
+import { CreatePackageDto } from './dto/create-package.dto';
+import { UpdatePackageDto } from './dto/update-package.dto';
+export declare class PackagesService {
+    private prisma;
+    constructor(prisma: PrismaService);
+    create(dto: CreatePackageDto): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        price: import("@prisma/client/runtime/library").Decimal;
+        durationDays: number;
+        maxAgents: number;
+        maxSessions: number;
+        maxContacts: number;
+        allowAudioResponse: boolean;
+        allowScheduling: boolean;
+        isActive: boolean;
+    }>;
+    findAll(): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        price: import("@prisma/client/runtime/library").Decimal;
+        durationDays: number;
+        maxAgents: number;
+        maxSessions: number;
+        maxContacts: number;
+        allowAudioResponse: boolean;
+        allowScheduling: boolean;
+        isActive: boolean;
+    }[]>;
+    findActive(): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        price: import("@prisma/client/runtime/library").Decimal;
+        durationDays: number;
+        maxAgents: number;
+        maxSessions: number;
+        maxContacts: number;
+        allowAudioResponse: boolean;
+        allowScheduling: boolean;
+        isActive: boolean;
+    }[]>;
+    findOne(id: string): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        price: import("@prisma/client/runtime/library").Decimal;
+        durationDays: number;
+        maxAgents: number;
+        maxSessions: number;
+        maxContacts: number;
+        allowAudioResponse: boolean;
+        allowScheduling: boolean;
+        isActive: boolean;
+    }>;
+    update(id: string, dto: UpdatePackageDto): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        price: import("@prisma/client/runtime/library").Decimal;
+        durationDays: number;
+        maxAgents: number;
+        maxSessions: number;
+        maxContacts: number;
+        allowAudioResponse: boolean;
+        allowScheduling: boolean;
+        isActive: boolean;
+    }>;
+    remove(id: string): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        price: import("@prisma/client/runtime/library").Decimal;
+        durationDays: number;
+        maxAgents: number;
+        maxSessions: number;
+        maxContacts: number;
+        allowAudioResponse: boolean;
+        allowScheduling: boolean;
+        isActive: boolean;
+    }>;
+}

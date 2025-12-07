@@ -1,0 +1,364 @@
+import { Injectable, BadRequestException, NotFoundException, Logger, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
+import { SchedulerRegistry } from '@nestjs/schedule';
+import { CronJob } from 'cron';
+import { PrismaService } from '../prisma/prisma.service';
+import { LLMService } from '../llm/llm.service';
+import { WhatsAppService } from '../whatsapp/whatsapp.service';
+import { CreatePlaygroundAgentDto } from './dto/create-playground-agent.dto';
+import { UpdatePlaygroundAgentDto } from './dto/update-playground-agent.dto';
+
+@Injectable()
+export class PlaygroundService implements OnModuleInit {
+    private readonly logger = new Logger(PlaygroundService.name);
+
+    constructor(
+        private prisma: PrismaService,
+        private llmService: LLMService,
+        private schedulerRegistry: SchedulerRegistry,
+        @Inject(forwardRef(() => WhatsAppService))
+        private whatsappService: WhatsAppService,
+    ) { }
+
+    async onModuleInit() {
+        await this.setupCleanupJob();
+    }
+
+    async setupCleanupJob() {
+        const setting = await this.prisma.systemSetting.findUnique({
+            where: { key: 'PLAYGROUND_CLEANUP_SCHEDULE' },
+        });
+
+        // Default: every day at 3 AM (0 3 * * *)
+        const cronExpression = setting?.value || '0 3 * * *';
+
+        try {
+            // Remove existing job if it exists
+            try {
+                const existingJob = this.schedulerRegistry.getCronJob('playground-cleanup');
+                existingJob.stop();
+                this.schedulerRegistry.deleteCronJob('playground-cleanup');
+            } catch (e) {
+                // Job doesn't exist yet, that's fine
+            }
+
+            // Create new cron job
+            const job = new CronJob(cronExpression, () => {
+                this.logger.log('Running scheduled playground cleanup...');
+                this.cleanupOldData();
+            });
+
+            this.schedulerRegistry.addCronJob('playground-cleanup', job);
+            job.start();
+
+            this.logger.log(`Playground cleanup scheduled with cron: ${cronExpression}`);
+        } catch (error) {
+            this.logger.error(`Failed to setup cleanup job: ${error.message}`);
+        }
+    }
+
+    // Agent Management
+    async createPlaygroundAgent(organizationId: string, dto: CreatePlaygroundAgentDto) {
+        // Check if organization has reached max agents limit
+        const limitCheck = await this.checkAgentCreationLimit(organizationId);
+        if (!limitCheck.allowed) {
+            throw new BadRequestException(
+                `Limite de agentes de teste atingido (${limitCheck.used}/${limitCheck.limit})`
+            );
+        }
+
+        return this.prisma.playgroundAgent.create({
+            data: {
+                ...dto,
+                organizationId,
+            },
+        });
+    }
+
+    async getPlaygroundAgents(organizationId: string) {
+        return this.prisma.playgroundAgent.findMany({
+            where: { organizationId },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+
+    async getPlaygroundAgent(id: string, organizationId: string) {
+        const agent = await this.prisma.playgroundAgent.findFirst({
+            where: { id, organizationId },
+        });
+
+        if (!agent) {
+            throw new NotFoundException('Agente de teste não encontrado');
+        }
+
+        return agent;
+    }
+
+    async updatePlaygroundAgent(id: string, organizationId: string, dto: UpdatePlaygroundAgentDto) {
+        await this.getPlaygroundAgent(id, organizationId);
+
+        return this.prisma.playgroundAgent.update({
+            where: { id },
+            data: dto,
+        });
+    }
+
+    async deletePlaygroundAgent(id: string, organizationId: string) {
+        await this.getPlaygroundAgent(id, organizationId);
+
+        return this.prisma.playgroundAgent.delete({
+            where: { id },
+        });
+    }
+
+    // Session Management
+    async createPlaygroundSession(userId: string, agentId: string, organizationId: string) {
+        if (!userId || !agentId || !organizationId) {
+            throw new BadRequestException('Missing required parameters: userId, agentId, or organizationId');
+        }
+
+        // Verify agent exists and belongs to organization
+        await this.getPlaygroundAgent(agentId, organizationId);
+
+        // Create session in database first
+        const session = await this.prisma.playgroundSession.create({
+            data: {
+                userId,
+                agentId,
+                organizationId,
+                status: 'CONNECTING',
+                qrCode: null,
+            },
+            include: {
+                agent: true,
+            },
+        });
+
+        // Create real WhatsApp session using Baileys
+        try {
+            await this.whatsappService.createSession(session.id);
+            this.logger.log(`Created real WhatsApp session for playground: ${session.id}`);
+        } catch (error) {
+            this.logger.error(`Failed to create WhatsApp session: ${error.message}`);
+            // Update session status to failed
+            await this.prisma.playgroundSession.update({
+                where: { id: session.id },
+                data: { status: 'DISCONNECTED' },
+            });
+            throw new BadRequestException('Failed to initialize WhatsApp session');
+        }
+
+        return session;
+    }
+
+    async getPlaygroundSessions(organizationId: string) {
+        return this.prisma.playgroundSession.findMany({
+            where: { organizationId },
+            include: {
+                agent: true,
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+
+    async getPlaygroundSessionsByAgent(agentId: string, organizationId: string) {
+        return this.prisma.playgroundSession.findMany({
+            where: { agentId, organizationId },
+            include: {
+
+                if(!session) {
+                    throw new NotFoundException('Sessão não encontrada');
+                }
+
+        return this.prisma.playgroundSession.delete({
+                    where: { id },
+                });
+            }
+
+    // Message Processing
+    async sendPlaygroundMessage(sessionId: string, content: string, organizationId: string) {
+                // Get session with agent
+                const session = await this.prisma.playgroundSession.findFirst({
+                    where: { id: sessionId, organizationId },
+                    include: { agent: true },
+                });
+
+                if (!session) {
+                    throw new NotFoundException('Sessão não encontrada');
+                }
+
+                // Check daily message limit
+                const limitCheck = await this.checkDailyMessageLimit(organizationId);
+                if (!limitCheck.allowed) {
+                    throw new BadRequestException(
+                        `Limite diário de mensagens atingido (${limitCheck.used}/${limitCheck.limit})`
+                    );
+                }
+
+                // Save user message
+                await this.prisma.playgroundMessage.create({
+                    data: {
+                        sessionId,
+                        content,
+                        sender: 'user',
+                    },
+                });
+
+                // Get conversation history
+                const messages = await this.prisma.playgroundMessage.findMany({
+                    where: { sessionId },
+                    orderBy: { createdAt: 'asc' },
+                });
+
+                // Get active LLM provider
+                const provider = await this.prisma.lLMProvider.findFirst({
+                    where: { isActive: true },
+                    orderBy: { priority: 'desc' },
+                });
+
+                if (!provider) {
+                    throw new BadRequestException('Nenhum provedor de LLM configurado');
+                }
+
+                // Get last user message for LLM
+                const lastUserMessage = content;
+
+                // Process with LLM
+                const response = await this.llmService.generateResponse(
+                    provider,
+                    session.agent.prompt,
+                    lastUserMessage,
+                    undefined, // no context for now
+                    organizationId,
+                    session.agentId
+                );
+
+                // Save agent response
+                const agentMessage = await this.prisma.playgroundMessage.create({
+                    data: {
+                        sessionId,
+                        content: response,
+                        sender: 'agent',
+                    },
+                });
+
+                return agentMessage;
+            }
+
+    async getPlaygroundMessages(sessionId: string, organizationId: string) {
+                // Verify session belongs to organization
+                const session = await this.prisma.playgroundSession.findFirst({
+                    where: { id: sessionId, organizationId },
+                });
+
+                if (!session) {
+                    throw new NotFoundException('Sessão não encontrada');
+                }
+
+                return this.prisma.playgroundMessage.findMany({
+                    where: { sessionId },
+                    orderBy: { createdAt: 'asc' },
+                });
+            }
+
+    // Limit Checking
+    async checkAgentCreationLimit(organizationId: string) {
+                const setting = await this.prisma.systemSetting.findUnique({
+                    where: { key: 'PLAYGROUND_MAX_AGENTS_PER_ORG' },
+                });
+
+                const limit = parseInt(setting?.value || '1');
+
+                const used = await this.prisma.playgroundAgent.count({
+                    where: { organizationId },
+                });
+
+                return {
+                    allowed: used < limit,
+                    used,
+                    limit,
+                };
+            }
+
+    async checkDailyMessageLimit(organizationId: string) {
+                const setting = await this.prisma.systemSetting.findUnique({
+                    where: { key: 'PLAYGROUND_DAILY_MSG_LIMIT' },
+                });
+
+                const limit = parseInt(setting?.value || '200');
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                const used = await this.prisma.playgroundMessage.count({
+                    where: {
+                        session: {
+                            organizationId,
+                        },
+                        createdAt: {
+                            gte: today,
+                        },
+                    },
+                });
+
+                return {
+                    allowed: used < limit,
+                    used,
+                    limit,
+                    remaining: limit - used,
+                };
+            }
+
+    async getLimits(organizationId: string) {
+                const [agentLimit, messageLimit] = await Promise.all([
+                    this.checkAgentCreationLimit(organizationId),
+                    this.checkDailyMessageLimit(organizationId),
+                ]);
+
+                return {
+                    agents: {
+                        used: agentLimit.used,
+                        limit: agentLimit.limit,
+                        canCreate: agentLimit.allowed,
+                    },
+                    messages: {
+                        used: messageLimit.used,
+                        limit: messageLimit.limit,
+                        remaining: messageLimit.remaining,
+                    },
+                };
+            }
+
+    // Cleanup old data - Runs based on configured schedule
+    async cleanupOldData() {
+                this.logger.log('[Playground Cleanup] Starting cleanup job...');
+
+                const setting = await this.prisma.systemSetting.findUnique({
+                    where: { key: 'PLAYGROUND_RETENTION_DAYS' },
+                });
+
+                const retentionDays = parseInt(setting?.value || '7');
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+                this.logger.log(`[Playground Cleanup] Deleting sessions older than ${retentionDays} days (before ${cutoffDate.toISOString()})`);
+
+                // Delete old sessions (cascade will delete messages)
+                const result = await this.prisma.playgroundSession.deleteMany({
+                    where: {
+                        createdAt: {
+                            lt: cutoffDate,
+                        },
+                    },
+                });
+
+                this.logger.log(`[Playground Cleanup] Deleted ${result.count} old playground sessions`);
+                return { deleted: result.count };
+            }
+        }

@@ -1,0 +1,31 @@
+import { WebSocketGateway, WebSocketServer, SubscribeMessage, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+
+@WebSocketGateway({
+    cors: {
+        origin: '*',
+    },
+})
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    @WebSocketServer()
+    server: Server;
+
+    handleConnection(client: Socket) {
+        console.log('Client connected:', client.id);
+    }
+
+    handleDisconnect(client: Socket) {
+        console.log('Client disconnected:', client.id);
+    }
+
+    @SubscribeMessage('joinRoom')
+    handleJoinRoom(client: Socket, room: string) {
+        client.join(room);
+        console.log(`Client ${client.id} joined room ${room}`);
+    }
+
+    // Method to emit events to specific rooms (e.g., session ID)
+    emitToRoom(room: string, event: string, data: any) {
+        this.server.to(room).emit(event, data);
+    }
+}

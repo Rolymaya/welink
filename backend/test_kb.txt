@@ -1,0 +1,5 @@
+This is a test document for the Knowledge Base.
+It contains some information about the company Welink.
+Welink is a SaaS platform for AI agents.
+It allows companies to create and manage their own AI agents.
+The agents can answer questions based on the knowledge base.
