@@ -1,20 +1,20 @@
 -- DropForeignKey
-ALTER TABLE `message` DROP FOREIGN KEY `Message_sessionId_fkey`;
+ALTER TABLE `Message` DROP FOREIGN KEY `Message_sessionId_fkey`;
 
 -- AlterTable
-ALTER TABLE `agent` ADD COLUMN `isActive` BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE `Agent` ADD COLUMN `isActive` BOOLEAN NOT NULL DEFAULT true;
 
 -- AlterTable
-ALTER TABLE `message` MODIFY `sessionId` VARCHAR(191) NULL;
+ALTER TABLE `Message` MODIFY `sessionId` VARCHAR(191) NULL;
 
 -- AlterTable
-ALTER TABLE `organization` MODIFY `logo` LONGTEXT NULL;
+ALTER TABLE `Organization` MODIFY `logo` LONGTEXT NULL;
 
 -- AlterTable
-ALTER TABLE `session` MODIFY `qrCode` LONGTEXT NULL;
+ALTER TABLE `Session` MODIFY `qrCode` LONGTEXT NULL;
 
 -- AlterTable
-ALTER TABLE `user` ADD COLUMN `name` VARCHAR(191) NULL,
+ALTER TABLE `User` ADD COLUMN `name` VARCHAR(191) NULL,
     ADD COLUMN `profilePhoto` LONGTEXT NULL;
 
 -- CreateTable

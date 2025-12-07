@@ -1,8 +1,8 @@
 /*
   Warnings:
 
-  - You are about to alter the column `type` on the `knowledgebase` table. The data in that column could be lost. The data in that column will be cast from `VarChar(191)` to `Enum(EnumId(4))`.
-  - You are about to drop the column `contentChunk` on the `knowledgevector` table. All the data in the column will be lost.
+  - You are about to alter the column `type` on the `KnowledgeBase` table. The data in that column could be lost. The data in that column will be cast from `VarChar(191)` to `Enum(EnumId(4))`.
+  - You are about to drop the column `contentChunk` on the `KnowledgeVector` table. All the data in the column will be lost.
   - Added the required column `content` to the `KnowledgeVector` table without a default value. This is not possible if the table is not empty.
 
 */

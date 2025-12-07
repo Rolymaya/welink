@@ -1,8 +1,8 @@
 -- AlterTable
-ALTER TABLE `playgroundsession` MODIFY `qrCode` LONGTEXT NULL;
+ALTER TABLE `PlaygroundSession` MODIFY `qrCode` LONGTEXT NULL;
 
 -- AlterTable
-ALTER TABLE `subscription` ADD COLUMN `bankAccountId` VARCHAR(191) NULL;
+ALTER TABLE `Subscription` ADD COLUMN `bankAccountId` VARCHAR(191) NULL;
 
 -- CreateTable
 CREATE TABLE `BankAccount` (
