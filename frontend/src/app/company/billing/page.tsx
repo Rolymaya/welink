@@ -1,6 +1,5 @@
-﻿import { buildApiUrl } from '@/lib/apiUrl';
-'use client';
-
+﻿'use client';
+import { buildApiUrl } from '@/lib/apiUrl';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -52,8 +51,8 @@ export default function BillingPage() {
             const headers = { Authorization: `Bearer ${token}` };
 
             const [subRes, usageRes] = await Promise.all([
-                fetch(buildApiUrl(''), { headers }),
-                fetch(buildApiUrl(''), { headers })
+                fetch(buildApiUrl('')), { headers }),
+                fetch(buildApiUrl('')), { headers })
             ]);
 
             if (subRes.ok) {

@@ -1,6 +1,5 @@
-﻿import { buildApiUrl } from '@/lib/apiUrl';
-'use client';
-
+﻿'use client';
+import { buildApiUrl } from '@/lib/apiUrl';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

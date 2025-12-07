@@ -1,6 +1,5 @@
-﻿import { buildApiUrl } from '@/lib/apiUrl';
-'use client';
-
+﻿'use client';
+import { buildApiUrl } from '@/lib/apiUrl';
 import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin-layout';
 import { Button } from '@/components/ui/button';
@@ -53,7 +52,7 @@ export default function SubscriptionsPage() {
     const fetchSubscriptions = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl(''), {
+            const response = await fetch(buildApiUrl('')), {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

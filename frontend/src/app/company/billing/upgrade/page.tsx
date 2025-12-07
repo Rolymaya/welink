@@ -1,6 +1,5 @@
-﻿import { buildApiUrl } from '@/lib/apiUrl';
-'use client';
-
+﻿'use client';
+import { buildApiUrl } from '@/lib/apiUrl';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -30,7 +29,7 @@ export default function UpgradePlanPage() {
     const fetchPackages = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl(''), {
+            const response = await fetch(buildApiUrl('')), {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

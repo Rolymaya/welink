@@ -1,6 +1,5 @@
-﻿import { buildApiUrl } from '@/lib/apiUrl';
-'use client';
-
+﻿'use client';
+import { buildApiUrl } from '@/lib/apiUrl';
 import { useState } from 'react';
 import AdminLayout from '@/components/admin-layout';
 import { Button } from '@/components/ui/button';
@@ -48,7 +47,7 @@ export default function CreatePackagePage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl(''), {
+            const response = await fetch(buildApiUrl('')), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

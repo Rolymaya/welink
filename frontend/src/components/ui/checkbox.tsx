@@ -1,6 +1,4 @@
-"use client"
-"use client"
-
+﻿'use client';
 import * as React from "react"
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"

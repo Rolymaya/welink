@@ -1,6 +1,5 @@
-﻿import { buildApiUrl } from '@/lib/apiUrl';
-'use client';
-
+﻿'use client';
+import { buildApiUrl } from '@/lib/apiUrl';
 import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,7 @@ export default function ForgotPasswordPage() {
         setError('');
 
         try {
-            const response = await fetch(buildApiUrl(''), {
+            const response = await fetch(buildApiUrl('')), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),
