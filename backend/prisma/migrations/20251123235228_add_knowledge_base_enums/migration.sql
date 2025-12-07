@@ -7,16 +7,16 @@
 
 */
 -- DropForeignKey
-ALTER TABLE `knowledgevector` DROP FOREIGN KEY `KnowledgeVector_knowledgeBaseId_fkey`;
+ALTER TABLE `KnowledgeVector` DROP FOREIGN KEY `KnowledgeVector_knowledgeBaseId_fkey`;
 
 -- AlterTable
-ALTER TABLE `knowledgebase` ADD COLUMN `errorMessage` TEXT NULL,
+ALTER TABLE `KnowledgeBase` ADD COLUMN `errorMessage` TEXT NULL,
     ADD COLUMN `sourceUrl` VARCHAR(191) NULL,
     ADD COLUMN `status` ENUM('PENDING', 'PROCESSING', 'READY', 'ERROR') NOT NULL DEFAULT 'PENDING',
     MODIFY `type` ENUM('FILE', 'URL', 'TEXT') NOT NULL DEFAULT 'TEXT';
 
 -- AlterTable
-ALTER TABLE `knowledgevector` DROP COLUMN `contentChunk`,
+ALTER TABLE `KnowledgeVector` DROP COLUMN `contentChunk`,
     ADD COLUMN `content` TEXT NOT NULL,
     ADD COLUMN `metadata` JSON NULL;
 
