@@ -20,6 +20,7 @@ interface DashboardStats {
         total: number;
         connected: number;
     };
+    upcomingAppointments: number;
     recentActivity: Array<{
         id: string;
         contactName: string;

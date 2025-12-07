@@ -17,7 +17,6 @@ interface Subscription {
         description: string;
         maxAgents: number;
         maxSessions: number;
-        maxSessions: number;
         maxContacts: number;
     };
     organization?: {

@@ -1,5 +1,5 @@
 ﻿'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CompanyLayout from '@/components/company-layout';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Send, Trash2, FlaskConical } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 
-export default function PlaygroundChatPage() {
+function ChatContent() {
     const searchParams = useSearchParams();
     const agentId = searchParams?.get('agentId');
 
@@ -164,8 +164,8 @@ export default function PlaygroundChatPage() {
                                         key={agent.id}
                                         onClick={() => handleSelectAgent(agent)}
                                         className={`w-full text-left p-3 rounded-lg border transition-colors ${selectedAgent?.id === agent.id
-                                                ? 'bg-primary text-white border-primary'
-                                                : 'hover:bg-gray-50 border-gray-200'
+                                            ? 'bg-primary text-white border-primary'
+                                            : 'hover:bg-gray-50 border-gray-200'
                                             }`}
                                     >
                                         <p className="font-medium text-sm">{agent.name}</p>
@@ -209,8 +209,8 @@ export default function PlaygroundChatPage() {
                                             >
                                                 <div
                                                     className={`max-w-[70%] rounded-lg px-4 py-2 ${msg.sender === 'user'
-                                                            ? 'bg-primary text-white'
-                                                            : 'bg-gray-100 text-gray-900'
+                                                        ? 'bg-primary text-white'
+                                                        : 'bg-gray-100 text-gray-900'
                                                         }`}
                                                 >
                                                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
@@ -248,5 +248,13 @@ export default function PlaygroundChatPage() {
                 </div>
             </div>
         </CompanyLayout>
+    );
+}
+
+export default function PlaygroundChatPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <ChatContent />
+        </Suspense>
     );
 }
