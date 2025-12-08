@@ -30,7 +30,7 @@ export default function PackagesPage() {
 
     const fetchPackages = async () => {
         try {
-            const response = await fetch(buildApiUrl('/packages'));
+            const response = await fetch(buildApiUrl('/packages/public'));
             if (response.ok) {
                 const data = await response.json();
                 const activePackages = data
