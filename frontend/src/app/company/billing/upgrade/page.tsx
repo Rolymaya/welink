@@ -29,7 +29,7 @@ export default function UpgradePlanPage() {
     const fetchPackages = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl(''), {
+            const response = await fetch(buildApiUrl('/packages/active'), {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
