@@ -1,5 +1,7 @@
 'use client';
 
+import { buildApiUrl } from '@/lib/apiUrl';
+
 import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin-layout';
 import { Button } from '@/components/ui/button';
@@ -36,7 +38,7 @@ export default function EditPackagePage() {
     const fetchPackage = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:3001/packages/${params.id}`, {
+            const response = await fetch(buildApiUrl(`/packages/${params.id}`), {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -87,7 +89,7 @@ export default function EditPackagePage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:3001/packages/${params.id}`, {
+            const response = await fetch(buildApiUrl(`/packages/${params.id}`), {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

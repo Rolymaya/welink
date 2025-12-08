@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { buildApiUrl } from '@/lib/apiUrl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -37,7 +38,7 @@ export default function SubscribePage() {
     const fetchBankAccounts = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3001/bank-accounts/active', {
+            const response = await fetch(buildApiUrl('/bank-accounts/active'), {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (response.ok) {
@@ -52,7 +53,7 @@ export default function SubscribePage() {
     const fetchPackage = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:3001/packages/${params.packageId}`, {
+            const response = await fetch(buildApiUrl(`/packages/${params.packageId}`), {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -97,7 +98,7 @@ export default function SubscribePage() {
             formData.append('bankAccountId', selectedBankId);
             formData.append('proof', file);
 
-            const response = await fetch('http://localhost:3001/subscriptions', {
+            const response = await fetch(buildApiUrl('/subscriptions'), {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
