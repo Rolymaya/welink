@@ -35,7 +35,7 @@ export default function HomePage() {
 
   const fetchPackages = async () => {
     try {
-      const response = await fetch(buildApiUrl(''));
+      const response = await fetch(buildApiUrl('/packages'));
       if (response.ok) {
         const data = await response.json();
         // Filter only active packages and sort by price
