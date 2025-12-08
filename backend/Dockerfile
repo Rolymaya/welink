@@ -48,4 +48,4 @@ COPY --from=builder /app/dist ./dist
 EXPOSE 3001
 
 # Start command
-CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && node dist/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
