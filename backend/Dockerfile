@@ -48,4 +48,5 @@ COPY --from=builder /app/dist ./dist
 EXPOSE 3001
 
 # Start command
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+# Start command
+CMD ["node", "dist/main.js"]
