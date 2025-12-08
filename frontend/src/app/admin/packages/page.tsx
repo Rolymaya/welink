@@ -45,7 +45,7 @@ export default function PackagesPage() {
     const fetchPackages = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl(''), {
+            const response = await fetch(buildApiUrl('/packages'), {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
