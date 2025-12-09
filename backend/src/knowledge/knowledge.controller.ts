@@ -30,6 +30,9 @@ export class KnowledgeController {
         },
     })
     async uploadFile(@Request() req, @UploadedFile() file: Express.Multer.File, @Body() dto: CreateKBDto) {
+        if (!file) {
+            throw new Error('File is required');
+        }
         return this.knowledgeService.createFromFile(req.user.orgId, dto, file);
     }
 

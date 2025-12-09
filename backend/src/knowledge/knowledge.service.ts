@@ -28,17 +28,28 @@ export class KnowledgeService {
         // 2. Trigger async processing
         const fs = require('fs');
         const path = require('path');
-        const tempPath = path.join(__dirname, '../../uploads', `${kb.id}-${file.originalname}`);
+        const uploadDir = path.join(process.cwd(), 'uploads');
+        const tempPath = path.join(uploadDir, `${kb.id}-${file.originalname}`);
 
-        // Ensure uploads dir exists
-        if (!fs.existsSync(path.join(__dirname, '../../uploads'))) {
-            fs.mkdirSync(path.join(__dirname, '../../uploads'), { recursive: true });
+        try {
+            // Ensure uploads dir exists
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
+
+            fs.writeFileSync(tempPath, file.buffer);
+
+            // Don't await this, let it run in background
+            this.ingestionService.processFile(kb.id, tempPath, file.mimetype, orgId);
+        } catch (error) {
+            console.error('Error saving file for processing:', error);
+            // Update KB status to ERROR if initial save fails
+            await this.prisma.knowledgeBase.update({
+                where: { id: kb.id },
+                data: { status: KBStatus.ERROR, errorMessage: 'Failed to save uploaded file' }
+            });
+            throw new Error('Failed to process file upload');
         }
-
-        fs.writeFileSync(tempPath, file.buffer);
-
-        // Don't await this, let it run in background
-        this.ingestionService.processFile(kb.id, tempPath, file.mimetype, orgId);
 
         return kb;
     }
