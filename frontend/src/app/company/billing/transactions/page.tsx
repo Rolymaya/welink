@@ -48,7 +48,7 @@ export default function TransactionsPage() {
     const fetchTransactions = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl(''), {
+            const response = await fetch(buildApiUrl('/subscriptions/my'), {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

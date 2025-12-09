@@ -52,7 +52,7 @@ export default function SubscriptionsPage() {
     const fetchSubscriptions = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl(''), {
+            const response = await fetch(buildApiUrl('/subscriptions'), {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

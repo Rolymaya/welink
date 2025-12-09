@@ -50,8 +50,8 @@ export default function BillingPage() {
             const headers = { Authorization: `Bearer ${token}` };
 
             const [subRes, usageRes] = await Promise.all([
-                fetch(buildApiUrl(''), { headers }),
-                fetch(buildApiUrl(''), { headers })
+                fetch(buildApiUrl('/subscriptions/active'), { headers }),
+                fetch(buildApiUrl('/subscriptions/usage'), { headers })
             ]);
 
             if (subRes.ok) {
