@@ -30,10 +30,18 @@ export class KnowledgeController {
         },
     })
     async uploadFile(@Request() req, @UploadedFile() file: Express.Multer.File, @Body() dto: CreateKBDto) {
-        if (!file) {
-            throw new Error('File is required');
+        try {
+            console.log(`[Upload] Starting file upload for org: ${req.user.orgId}`);
+            if (!file) {
+                console.error('[Upload] No file received in request');
+                throw new Error('File is required');
+            }
+            console.log(`[Upload] File details: ${file.originalname} (${file.size} bytes)`);
+            return await this.knowledgeService.createFromFile(req.user.orgId, dto, file);
+        } catch (error) {
+            console.error('[Upload] CRITICAL ERROR:', error);
+            throw error;
         }
-        return this.knowledgeService.createFromFile(req.user.orgId, dto, file);
     }
 
     @Post('url')
