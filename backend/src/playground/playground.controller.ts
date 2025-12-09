@@ -20,31 +20,31 @@ export class PlaygroundController {
     @Post('agents')
     @Roles('COMPANY_ADMIN', 'COMPANY_USER')
     createAgent(@Request() req, @Body() dto: CreatePlaygroundAgentDto) {
-        return this.playgroundService.createPlaygroundAgent(req.user.orgId, dto);
+        return this.playgroundService.createPlaygroundAgent(req.user.organizationId, dto);
     }
 
     @Get('agents')
     @Roles('COMPANY_ADMIN', 'COMPANY_USER')
     getAgents(@Request() req) {
-        return this.playgroundService.getPlaygroundAgents(req.user.orgId);
+        return this.playgroundService.getPlaygroundAgents(req.user.organizationId);
     }
 
     @Get('agents/:id')
     @Roles('COMPANY_ADMIN', 'COMPANY_USER')
     getAgent(@Request() req, @Param('id') id: string) {
-        return this.playgroundService.getPlaygroundAgent(id, req.user.orgId);
+        return this.playgroundService.getPlaygroundAgent(id, req.user.organizationId);
     }
 
     @Patch('agents/:id')
     @Roles('COMPANY_ADMIN', 'COMPANY_USER')
     updateAgent(@Request() req, @Param('id') id: string, @Body() dto: UpdatePlaygroundAgentDto) {
-        return this.playgroundService.updatePlaygroundAgent(id, req.user.orgId, dto);
+        return this.playgroundService.updatePlaygroundAgent(id, req.user.organizationId, dto);
     }
 
     @Delete('agents/:id')
     @Roles('COMPANY_ADMIN', 'COMPANY_USER')
     deleteAgent(@Request() req, @Param('id') id: string) {
-        return this.playgroundService.deletePlaygroundAgent(id, req.user.orgId);
+        return this.playgroundService.deletePlaygroundAgent(id, req.user.organizationId);
     }
 
     // Session Endpoints
@@ -54,14 +54,14 @@ export class PlaygroundController {
         console.log('[Playground Controller] Creating session:', {
             userId: req.user.userId,
             agentId: body.agentId,
-            orgId: req.user.orgId
+            orgId: req.user.organizationId
         });
 
         try {
             const session = await this.playgroundService.createPlaygroundSession(
                 req.user.userId,
                 body.agentId,
-                req.user.orgId
+                req.user.organizationId
             );
             console.log('[Playground Controller] Session created successfully:', session.id);
             return session;
@@ -76,47 +76,47 @@ export class PlaygroundController {
     getSessions(@Request() req) {
         const agentId = req.query.agentId;
         if (agentId) {
-            return this.playgroundService.getPlaygroundSessionsByAgent(agentId, req.user.orgId);
+            return this.playgroundService.getPlaygroundSessionsByAgent(agentId, req.user.organizationId);
         }
-        return this.playgroundService.getPlaygroundSessions(req.user.orgId);
+        return this.playgroundService.getPlaygroundSessions(req.user.organizationId);
     }
 
     @Get('sessions/:id/status')
     @Roles('COMPANY_ADMIN', 'COMPANY_USER')
     async getSessionStatus(@Param('id') id: string, @Request() req) {
-        return this.playgroundService.getPlaygroundSessionStatus(id, req.user.orgId);
+        return this.playgroundService.getPlaygroundSessionStatus(id, req.user.organizationId);
     }
 
     @Post('sessions/:id/disconnect')
     @Roles('COMPANY_ADMIN', 'COMPANY_USER')
     async disconnectSession(@Param('id') id: string, @Request() req) {
-        return this.playgroundService.disconnectPlaygroundSession(id, req.user.orgId);
+        return this.playgroundService.disconnectPlaygroundSession(id, req.user.organizationId);
     }
 
     @Delete('sessions/:id')
     @Roles('COMPANY_ADMIN', 'COMPANY_USER')
     async deleteSession(@Param('id') id: string, @Request() req) {
-        return this.playgroundService.deletePlaygroundSession(id, req.user.orgId);
+        return this.playgroundService.deletePlaygroundSession(id, req.user.organizationId);
     }
 
     // Message Endpoints
     @Post('messages')
     @Roles('COMPANY_ADMIN', 'COMPANY_USER')
     sendMessage(@Request() req, @Body() dto: SendPlaygroundMessageDto) {
-        return this.playgroundService.sendPlaygroundMessage(dto.sessionId, dto.content, req.user.orgId);
+        return this.playgroundService.sendPlaygroundMessage(dto.sessionId, dto.content, req.user.organizationId);
     }
 
     @Get('sessions/:id/messages')
     @Roles('COMPANY_ADMIN', 'COMPANY_USER')
     getMessages(@Request() req, @Param('id') sessionId: string) {
-        return this.playgroundService.getPlaygroundMessages(sessionId, req.user.orgId);
+        return this.playgroundService.getPlaygroundMessages(sessionId, req.user.organizationId);
     }
 
     // Limits Endpoint
     @Get('limits')
     @Roles('COMPANY_ADMIN', 'COMPANY_USER')
     getLimits(@Request() req) {
-        return this.playgroundService.getLimits(req.user.orgId);
+        return this.playgroundService.getLimits(req.user.organizationId);
     }
 
     // Cleanup (Manual trigger for Super Admin)

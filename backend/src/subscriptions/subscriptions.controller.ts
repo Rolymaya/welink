@@ -39,7 +39,7 @@ export class SubscriptionsController {
             createSubscriptionDto.paymentProofUrl = `/uploads/proofs/${filename}`;
         }
 
-        return this.subscriptionsService.create(req.user.orgId, createSubscriptionDto);
+        return this.subscriptionsService.create(req.user.organizationId, createSubscriptionDto);
     }
 
     @Get()
@@ -51,13 +51,13 @@ export class SubscriptionsController {
     @Get('my')
     @Roles('COMPANY_ADMIN')
     findMy(@Request() req) {
-        return this.subscriptionsService.findByOrganization(req.user.orgId);
+        return this.subscriptionsService.findByOrganization(req.user.organizationId);
     }
 
     @Get('status')
     @Roles('COMPANY_ADMIN')
     async getStatus(@Request() req) {
-        const subscription = await this.subscriptionsService.getActiveSubscription(req.user.orgId);
+        const subscription = await this.subscriptionsService.getActiveSubscription(req.user.organizationId);
         return {
             hasActiveSubscription: !!subscription,
             subscription: subscription || null,
@@ -67,13 +67,13 @@ export class SubscriptionsController {
     @Get('active')
     @Roles('COMPANY_ADMIN')
     getActive(@Request() req) {
-        return this.subscriptionsService.getActiveSubscription(req.user.orgId);
+        return this.subscriptionsService.getActiveSubscription(req.user.organizationId);
     }
 
     @Get('usage')
     @Roles('COMPANY_ADMIN')
     getUsage(@Request() req) {
-        return this.subscriptionsService.getUsage(req.user.orgId);
+        return this.subscriptionsService.getUsage(req.user.organizationId);
     }
 
     @Get('settings')

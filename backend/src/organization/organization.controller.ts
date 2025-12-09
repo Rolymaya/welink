@@ -50,16 +50,16 @@ export class OrganizationController {
     @Get('profile')
     @UseGuards(JwtAuthGuard)
     async getProfile(@Request() req) {
-        if (!req.user.orgId) {
+        if (!req.user.organizationId) {
             return { message: 'User does not belong to an organization' };
         }
-        return this.organizationService.findOne(req.user.orgId);
+        return this.organizationService.findOne(req.user.organizationId);
     }
 
     @Patch('profile')
     @UseGuards(JwtAuthGuard)
     async updateProfile(@Request() req, @Body() dto: UpdateOrganizationDto) {
-        return this.organizationService.update(req.user.orgId, dto);
+        return this.organizationService.update(req.user.organizationId, dto);
     }
 
     @Post('logo')
@@ -78,18 +78,18 @@ export class OrganizationController {
         },
     })
     async uploadLogo(@Request() req, @UploadedFile() file: Express.Multer.File) {
-        return this.organizationService.uploadLogo(req.user.orgId, file);
+        return this.organizationService.uploadLogo(req.user.organizationId, file);
     }
 
     @Get('dashboard-stats')
     @UseGuards(JwtAuthGuard)
     async getDashboardStats(@Request() req) {
-        return this.organizationService.getDashboardStats(req.user.orgId);
+        return this.organizationService.getDashboardStats(req.user.organizationId);
     }
 
     @Patch('complete-onboarding')
     @UseGuards(JwtAuthGuard)
     async completeOnboarding(@Request() req) {
-        return this.organizationService.completeOnboarding(req.user.orgId);
+        return this.organizationService.completeOnboarding(req.user.organizationId);
     }
 }

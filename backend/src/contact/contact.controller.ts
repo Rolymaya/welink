@@ -17,11 +17,11 @@ export class ContactController {
     @UseGuards(LimitGuard)
     @CheckLimit('contacts')
     create(@Request() req, @Body() createContactDto: CreateContactDto) {
-        return this.contactService.create(req.user.orgId, createContactDto);
+        return this.contactService.create(req.user.organizationId, createContactDto);
     }
 
     @Get()
     findAll(@Request() req) {
-        return this.contactService.findAll(req.user.orgId);
+        return this.contactService.findAll(req.user.organizationId);
     }
 }

@@ -18,32 +18,32 @@ export class AgentController {
     @UseGuards(LimitGuard)
     @CheckLimit('agents')
     create(@Request() req, @Body() createAgentDto: CreateAgentDto) {
-        return this.agentService.create(req.user.orgId, createAgentDto);
+        return this.agentService.create(req.user.organizationId, createAgentDto);
     }
 
     @Get()
     findAll(@Request() req) {
         console.log('GET /agents called by user:', req.user);
-        return this.agentService.findAll(req.user.orgId);
+        return this.agentService.findAll(req.user.organizationId);
     }
 
     @Get(':id')
     findOne(@Param('id') id: string, @Request() req) {
-        return this.agentService.findOne(id, req.user.orgId);
+        return this.agentService.findOne(id, req.user.organizationId);
     }
 
     @Patch(':id')
     update(@Param('id') id: string, @Body() updateAgentDto: UpdateAgentDto, @Request() req) {
-        return this.agentService.update(id, req.user.orgId, updateAgentDto);
+        return this.agentService.update(id, req.user.organizationId, updateAgentDto);
     }
 
     @Delete(':id')
     remove(@Param('id') id: string, @Request() req) {
-        return this.agentService.remove(id, req.user.orgId);
+        return this.agentService.remove(id, req.user.organizationId);
     }
 
     @Post(':id/chat')
     chat(@Param('id') id: string, @Body('message') message: string, @Request() req) {
-        return this.agentService.chat(id, req.user.orgId, message);
+        return this.agentService.chat(id, req.user.organizationId, message);
     }
 }

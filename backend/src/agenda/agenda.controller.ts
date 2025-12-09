@@ -11,13 +11,13 @@ export class AgendaController {
     create(@Request() req, @Body() createAgendaDto: any) {
         return this.agendaService.create({
             ...createAgendaDto,
-            organizationId: req.user.orgId,
+            organizationId: req.user.organizationId,
         });
     }
 
     @Get()
     findAll(@Request() req) {
-        return this.agendaService.findAll(req.user.orgId);
+        return this.agendaService.findAll(req.user.organizationId);
     }
 
     @Get(':id')

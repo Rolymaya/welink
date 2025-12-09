@@ -31,13 +31,13 @@ export class KnowledgeController {
     })
     async uploadFile(@Request() req, @UploadedFile() file: Express.Multer.File, @Body() dto: CreateKBDto) {
         try {
-            console.log(`[Upload] Starting file upload for org: ${req.user.orgId}`);
+            console.log(`[Upload] Starting file upload for org: ${req.user.organizationId}`);
             if (!file) {
                 console.error('[Upload] No file received in request');
                 throw new Error('File is required');
             }
             console.log(`[Upload] File details: ${file.originalname} (${file.size} bytes)`);
-            return await this.knowledgeService.createFromFile(req.user.orgId, dto, file);
+            return await this.knowledgeService.createFromFile(req.user.organizationId, dto, file);
         } catch (error) {
             console.error('[Upload] CRITICAL ERROR:', error);
             throw error;
@@ -46,16 +46,16 @@ export class KnowledgeController {
 
     @Post('url')
     async addUrl(@Request() req, @Body() dto: CreateUrlKBDto) {
-        return this.knowledgeService.createFromUrl(req.user.orgId, dto);
+        return this.knowledgeService.createFromUrl(req.user.organizationId, dto);
     }
 
     @Get()
     async findAll(@Request() req) {
-        return this.knowledgeService.findAll(req.user.orgId);
+        return this.knowledgeService.findAll(req.user.organizationId);
     }
 
     @Delete(':id')
     async remove(@Request() req, @Param('id') id: string) {
-        return this.knowledgeService.remove(id, req.user.orgId);
+        return this.knowledgeService.remove(id, req.user.organizationId);
     }
 }

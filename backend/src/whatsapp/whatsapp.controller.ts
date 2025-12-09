@@ -27,7 +27,7 @@ export class WhatsAppController {
             include: { organization: true },
         });
 
-        if (!agent || agent.organizationId !== req.user.orgId) {
+        if (!agent || agent.organizationId !== req.user.organizationId) {
             throw new Error('Agent not found or unauthorized');
         }
 
@@ -55,7 +55,7 @@ export class WhatsAppController {
 
         const where: any = {
             agent: {
-                organizationId: req.user.orgId,
+                organizationId: req.user.organizationId,
             },
         };
 
@@ -84,7 +84,7 @@ export class WhatsAppController {
             where: {
                 id,
                 agent: {
-                    organizationId: req.user.orgId,
+                    organizationId: req.user.organizationId,
                 },
             },
         });
@@ -104,7 +104,7 @@ export class WhatsAppController {
             where: {
                 id,
                 agent: {
-                    organizationId: req.user.orgId,
+                    organizationId: req.user.organizationId,
                 },
             },
         });
@@ -123,7 +123,7 @@ export class WhatsAppController {
             where: {
                 id,
                 agent: {
-                    organizationId: req.user.orgId,
+                    organizationId: req.user.organizationId,
                 },
             },
         });
@@ -144,7 +144,7 @@ export class WhatsAppController {
                 where: {
                     id,
                     agent: {
-                        organizationId: req.user.orgId,
+                        organizationId: req.user.organizationId,
                     },
                 },
             });
