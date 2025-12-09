@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LayoutDashboard, Settings, Users, Bot, MessageSquare, Shield, LogOut, Package, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Settings, Users, Bot, MessageSquare, Shield, LogOut, Package, CreditCard, Landmark } from 'lucide-react';
 import { Button } from './ui/button';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -36,6 +36,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <Link href="/admin/subscriptions" className="flex items-center px-4 py-2 text-white hover:bg-white hover:text-blue-600 rounded-md transition-all">
                         <CreditCard className="w-5 h-5 mr-3" />
                         Subscrições
+                    </Link>
+                    <Link href="/admin/bank-accounts" className="flex items-center px-4 py-2 text-white hover:bg-white hover:text-blue-600 rounded-md transition-all">
+                        <Landmark className="w-5 h-5 mr-3" />
+                        Contas Bancárias
                     </Link>
                     <Link href="/admin/llms" className="flex items-center px-4 py-2 text-white hover:bg-white hover:text-blue-600 rounded-md transition-all">
                         <Bot className="w-5 h-5 mr-3" />
