@@ -11,10 +11,34 @@ export class VectorStoreService implements OnModuleInit {
     constructor(private configService: ConfigService) { }
 
     async onModuleInit() {
+        const weaviateUrl = this.configService.get('WEAVIATE_URL');
+        const weaviateApiKey = this.configService.get('WEAVIATE_API_KEY');
+        const weaviateHost = this.configService.get('WEAVIATE_HOST') || 'localhost:8080';
+        const weaviateScheme = this.configService.get('WEAVIATE_SCHEME') || 'http';
+
+        // Prefer WEAVIATE_URL if set, otherwise construct from HOST/SCHEME
+        let host = weaviateHost;
+        let scheme = weaviateScheme;
+
+        if (weaviateUrl) {
+            try {
+                const parsed = new URL(weaviateUrl);
+                host = parsed.host;
+                scheme = parsed.protocol.replace(':', '');
+            } catch (e) {
+                this.logger.warn(`Invalid WEAVIATE_URL: ${weaviateUrl}, falling back to HOST/SCHEME`);
+            }
+        }
+
+        this.logger.log(`Connecting to Weaviate at ${scheme}://${host}`);
+
         this.client = weaviate.client({
-            scheme: 'http',
-            host: this.configService.get('WEAVIATE_HOST') || 'localhost:8080',
+            scheme: scheme,
+            host: host,
+            apiKey: weaviateApiKey ? { apiKey: weaviateApiKey } : undefined,
+            // Add custom headers if needed for some providers
         });
+
         await this.ensureSchema();
     }
 

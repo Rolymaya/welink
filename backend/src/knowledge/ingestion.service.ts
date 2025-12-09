@@ -83,7 +83,9 @@ export class IngestionService {
                 const content = chunk.pageContent;
 
                 // Generate embedding
+                this.logger.debug(`Generating embedding for chunk ${i}...`);
                 const embedding = await embeddings.embedQuery(content);
+                this.logger.debug(`Embedding generated for chunk ${i}`);
 
                 // Create DB record
                 const vectorId = uuidv4(); // Weaviate ID needs to be UUID
@@ -113,7 +115,9 @@ export class IngestionService {
 
             // Batch insert to Weaviate
             if (vectors.length > 0) {
+                this.logger.log(`Inserting ${vectors.length} vectors into Weaviate...`);
                 await this.vectorStore.addVectors(vectors);
+                this.logger.log('Vectors inserted successfully');
             }
 
             // Cleanup file
