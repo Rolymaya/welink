@@ -49,7 +49,7 @@ export class WhatsAppController {
     @Get('sessions')
     async getSessions(@Request() req, @Query('agentId') agentId?: string) {
         console.log('GET /whatsapp/sessions called by user:', req.user);
-        if (!req.user?.orgId) {
+        if (!req.user.organizationId) {
             throw new UnauthorizedException('User organization not found. Please login again.');
         }
 

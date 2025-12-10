@@ -9,12 +9,12 @@ export class PlanGuard implements CanActivate {
         const request = context.switchToHttp().getRequest();
         const user = request.user;
 
-        if (!user || !user.orgId) {
+        if (!user || !user.organizationId) {
             return true; // Allow if no organization context (e.g. super admin)
         }
 
         // Check for active subscription
-        const subscription = await this.subscriptionsService.getActiveSubscription(user.orgId);
+        const subscription = await this.subscriptionsService.getActiveSubscription(user.organizationId);
 
         // Attach subscription to request (can be null)
         request.subscription = subscription;

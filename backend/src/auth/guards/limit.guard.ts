@@ -25,18 +25,18 @@ export class LimitGuard implements CanActivate {
         const request = context.switchToHttp().getRequest();
         const user = request.user;
 
-        if (!user || !user.orgId) {
+        if (!user || !user.organizationId) {
             return true;
         }
 
         // Get active subscription - same logic as billing page
-        const subscription = await this.subscriptionsService.getActiveSubscription(user.orgId);
+        const subscription = await this.subscriptionsService.getActiveSubscription(user.organizationId);
         if (!subscription) {
             throw new ForbiddenException('No active subscription found.');
         }
 
         // Get current usage
-        const usage = await this.subscriptionsService.getUsage(user.orgId);
+        const usage = await this.subscriptionsService.getUsage(user.organizationId);
 
         // Use organization limits (snapshot) from active subscription
         // Fallback to package limits if organization limits are missing (safety check)
