@@ -30,11 +30,11 @@ export class OrganizationController {
     @UseInterceptors(FileInterceptor('logo'))
     @ApiConsumes('multipart/form-data')
     async register(@Request() req, @Body() dto: RegisterOrganizationDto, @UploadedFile() logo: Express.Multer.File) {
-        const organization = await this.organizationService.create(req.user.userId, dto, logo);
+        const organization = await this.organizationService.create(req.user.id, dto, logo);
 
         // Login user to get new token with updated role and organizationId
         const updatedUser = {
-            id: req.user.userId,
+            id: req.user.id,
             email: req.user.email,
             role: 'COMPANY_ADMIN',
             organizationId: organization.id

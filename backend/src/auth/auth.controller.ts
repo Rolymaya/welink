@@ -50,7 +50,7 @@ export class AuthController {
     @Post('profile') // Using Post or Patch, usually Patch is better but let's stick to standard if needed. Let's use Patch as planned.
     @ApiOperation({ summary: 'Update user profile' })
     async updateProfile(@Request() req, @Body() body: { name?: string; email?: string; password?: string; phone?: string; profilePhoto?: string }) {
-        return this.authService.updateProfile(req.user.userId, body);
+        return this.authService.updateProfile(req.user.id, body);
     }
 
     @Post('profile/photo')
@@ -84,6 +84,6 @@ export class AuthController {
             mimetype: file.mimetype,
             size: file.size,
         });
-        return this.authService.uploadProfilePhoto(req.user.userId, file);
+        return this.authService.uploadProfilePhoto(req.user.id, file);
     }
 }

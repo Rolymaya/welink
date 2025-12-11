@@ -52,14 +52,14 @@ export class PlaygroundController {
     @Roles('COMPANY_ADMIN', 'COMPANY_USER')
     async createSession(@Request() req, @Body() body: { agentId: string }) {
         console.log('[Playground Controller] Creating session:', {
-            userId: req.user.userId,
+            userId: req.user.id,
             agentId: body.agentId,
             orgId: req.user.organizationId
         });
 
         try {
             const session = await this.playgroundService.createPlaygroundSession(
-                req.user.userId,
+                req.user.id,
                 body.agentId,
                 req.user.organizationId
             );
