@@ -18,22 +18,22 @@ export default function SuperAdminLoginPage() {
     const router = useRouter();
 
     useEffect(() => {
-        // Check if already logged in as super admin
+        // Verificar se já está logado como super admin
         const checkAuth = async () => {
             const token = localStorage.getItem('token');
             if (token) {
                 try {
                     const res = await api.get('/auth/profile');
                     if (res.data.role === 'SUPER_ADMIN') {
-                        // Already logged in as super admin, redirect
+                        // Já logado como super admin, redirecionar
                         router.push('/admin/dashboard');
                     } else {
-                        // Logged in but not super admin, clear token
+                        // Logado, mas não como super admin, limpar token
                         localStorage.removeItem('token');
                         setChecking(false);
                     }
                 } catch (error) {
-                    // Token invalid, clear it
+                    // Token inválido, limpar
                     localStorage.removeItem('token');
                     setChecking(false);
                 }
@@ -54,17 +54,17 @@ export default function SuperAdminLoginPage() {
 
             localStorage.setItem('token', token);
 
-            // Check if user is super admin
+            // Verificar se o usuário é super admin
             const profileRes = await api.get('/auth/profile');
             if (profileRes.data.role === 'SUPER_ADMIN') {
-                toast.success('Welcome, Super Admin!');
+                toast.success('Bem-vindo, Super Admin!');
                 router.push('/admin/dashboard');
             } else {
                 localStorage.removeItem('token');
-                toast.error('Access denied. Super Admin credentials required.');
+                toast.error('Acesso negado. Credenciais de Super Admin necessárias.');
             }
         } catch (error) {
-            toast.error('Invalid credentials');
+            toast.error('Credenciais inválidas');
         } finally {
             setLoading(false);
         }
@@ -91,9 +91,9 @@ export default function SuperAdminLoginPage() {
                             <Shield className="h-8 w-8 text-purple-500" />
                         </div>
                     </div>
-                    <CardTitle className="text-center text-2xl">Super Admin Access</CardTitle>
+                    <CardTitle className="text-center text-2xl">Acesso Super Admin</CardTitle>
                     <CardDescription className="text-center">
-                        Enter your super admin credentials to access the platform dashboard
+                        Entre com suas credenciais de super administrador para acessar o painel
                     </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleLogin}>
@@ -103,7 +103,7 @@ export default function SuperAdminLoginPage() {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="admin@example.com"
+                                placeholder="admin@exemplo.com"
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -111,7 +111,7 @@ export default function SuperAdminLoginPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">Senha</Label>
                             <Input
                                 id="password"
                                 type="password"
@@ -128,11 +128,11 @@ export default function SuperAdminLoginPage() {
                             className="w-full bg-purple-600 hover:bg-purple-700"
                             disabled={loading}
                         >
-                            {loading ? 'Signing in...' : 'Sign in as Super Admin'}
+                            {loading ? 'Entrando...' : 'Entrar como Super Admin'}
                         </Button>
                         <div className="text-center text-sm text-muted-foreground">
                             <Link href="/" className="hover:text-purple-500 transition-colors">
-                                ← Back to home
+                                ← Voltar para início
                             </Link>
                         </div>
                     </CardFooter>
