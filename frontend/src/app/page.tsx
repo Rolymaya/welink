@@ -576,7 +576,7 @@ export default function HomePage() {
                   <Phone className="h-7 w-7 text-white" />
                 </div>
                 <h3 className="text-xl font-bold">Telefone</h3>
-                <p className="text-gray-600 dark:text-gray-400">+244 900 000 000</p>
+                <p className="text-gray-600 dark:text-gray-400">+244 945 571 528</p>
               </CardContent>
             </Card>
 
@@ -586,7 +586,7 @@ export default function HomePage() {
                   <Mail className="h-7 w-7 text-white" />
                 </div>
                 <h3 className="text-xl font-bold">Email</h3>
-                <p className="text-gray-600 dark:text-gray-400">contato@welinkai.ao</p>
+                <p className="text-gray-600 dark:text-gray-400">nos@wenova.ao</p>
               </CardContent>
             </Card>
 
