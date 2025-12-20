@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger, Inject } from '@nestjs/common';
 import weaviate, { WeaviateClient } from 'weaviate-ts-client';
 import { ConfigService } from '@nestjs/config';
 
@@ -8,7 +8,7 @@ export class VectorStoreService implements OnModuleInit {
     private readonly logger = new Logger(VectorStoreService.name);
     private readonly CLASS_NAME = 'KnowledgeChunk';
 
-    constructor(private configService: ConfigService) { }
+    constructor(@Inject(ConfigService) private readonly configService: ConfigService) { }
 
     async onModuleInit() {
         const weaviateUrl = this.configService.get('WEAVIATE_URL');
@@ -108,6 +108,32 @@ export class VectorStoreService implements OnModuleInit {
             .do();
     }
 
+    async searchKnowledgeOnly(queryVector: number[], orgId: string, limit = 5) {
+        // Search but exclude products (kbId != 'system-products')
+        return this.client.graphql
+            .get()
+            .withClassName(this.CLASS_NAME)
+            .withFields('content kbId source _additional { distance }')
+            .withNearVector({ vector: queryVector })
+            .withWhere({
+                operator: 'And',
+                operands: [
+                    {
+                        path: ['orgId'],
+                        operator: 'Equal',
+                        valueString: orgId,
+                    },
+                    {
+                        path: ['kbId'],
+                        operator: 'NotEqual',
+                        valueString: 'system-products', // Exclude products
+                    },
+                ],
+            })
+            .withLimit(limit)
+            .do();
+    }
+
     async deleteByKbId(kbId: string) {
         this.logger.log(`[VectorStore] Deleting objects for kbId: ${kbId}`);
         // Weaviate batch delete
@@ -122,6 +148,18 @@ export class VectorStoreService implements OnModuleInit {
             .do();
 
         this.logger.log(`[VectorStore] Deletion result: ${JSON.stringify(result)}`);
+        return result;
+    }
+
+    async deleteObjectById(id: string) {
+        this.logger.log(`[VectorStore] Deleting object by ID: ${id}`);
+        const result = await this.client.data
+            .deleter()
+            .withClassName(this.CLASS_NAME)
+            .withId(id)
+            .do();
+
+        this.logger.log(`[VectorStore] Single object deletion result: ${JSON.stringify(result)}`);
         return result;
     }
 
@@ -183,5 +221,18 @@ export class VectorStoreService implements OnModuleInit {
             })
             .withLimit(limit)
             .do();
+    }
+
+    // --- Text-based Search (for hybrid agent) ---
+
+    async searchByText(query: string, filter: any): Promise<any[]> {
+        // For now, return empty array - will implement with embeddings later
+        // This is a placeholder to prevent errors
+        return [];
+    }
+
+    async addDocument(doc: { content: string; metadata: any }): Promise<void> {
+        // Placeholder - will implement with embeddings later
+        // Silently skip for now
     }
 }

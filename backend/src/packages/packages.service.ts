@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
 
 @Injectable()
 export class PackagesService {
-    constructor(private prisma: PrismaService) { }
+    constructor(@Inject(PrismaService) private prisma: PrismaService) { }
 
     async create(dto: CreatePackageDto) {
         return this.prisma.package.create({

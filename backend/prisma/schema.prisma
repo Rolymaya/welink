@@ -85,8 +85,95 @@ model Organization {
   transactions  Transaction[]
   playgroundAgents   PlaygroundAgent[]
   playgroundSessions PlaygroundSession[]
+  products      Product[]
+  orders        Order[]
+  bankAccounts  BankAccount[]
+
+  // Affiliate Relations
+  affiliateProfile AffiliateProfile?
+  referral         AffiliateReferral? @relation("ReferredOrganization") // If this org was referred by someone
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model AffiliateProfile {
+  id             String   @id @default(uuid())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String   @unique
+
+  referralCode   String   @unique
+  walletBalance  Decimal  @db.Decimal(10, 2) @default(0)
+  totalEarnings  Decimal  @db.Decimal(10, 2) @default(0)
+
+  bankAccounts   AffiliateBankAccount[]
+
+  referrals      AffiliateReferral[] @relation("ReferrerProfile")
+  transactions   AffiliateTransaction[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model AffiliateBankAccount {
+  id                 String           @id @default(uuid())
+  affiliateProfile   AffiliateProfile @relation(fields: [affiliateProfileId], references: [id], onDelete: Cascade)
+  affiliateProfileId String
+
+  bankName           String
+  accountHolder      String
+  accountNumber      String
+  iban               String?
+  swift              String?
+
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+}
+
+model AffiliateReferral {
+  id             String   @id @default(uuid())
+  
+  referrer       AffiliateProfile @relation("ReferrerProfile", fields: [referrerId], references: [id])
+  referrerId     String
+
+  referred       Organization @relation("ReferredOrganization", fields: [referredOrgId], references: [id])
+  referredOrgId  String   @unique
+
+  status         String   @default("ACTIVE") // ACTIVE, INACTIVE
+  commissionCount Int     @default(0)
+  totalAmount     Decimal  @default(0) @db.Decimal(10, 2)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model AffiliateTransaction {
+  id                String   @id @default(uuid())
+  affiliateProfile  AffiliateProfile @relation(fields: [affiliateProfileId], references: [id])
+  affiliateProfileId String
+
+  type              AffiliateTransactionType
+  amount            Decimal @db.Decimal(10, 2)
+  status            AffiliateTransactionStatus @default(COMPLETED)
+  
+  description       String?
+  bankSnapshot      Json?    // Snapshot of bank details at usage time
+
+  createdAt         DateTime @default(now())
+}
+
+enum AffiliateTransactionType {
+  COMMISSION_EARNED
+  WITHDRAWAL_REQUEST
+  WITHDRAWAL_COMPLETED
+  WITHDRAWAL_REJECTED
+}
+
+enum AffiliateTransactionStatus {
+  PENDING
+  APPROVED
+  COMPLETED
+  REJECTED
 }
 
 model Package {
@@ -126,6 +213,24 @@ model Subscription {
   @@index([status])
   @@index([endDate])
   @@index([packageId])
+}
+
+model BankAccount {
+  id            String         @id @default(uuid())
+  bankName      String
+  accountHolder String
+  iban          String
+  swift         String?
+  isActive      Boolean        @default(true)
+  subscriptions Subscription[]
+  
+  organization  Organization?  @relation(fields: [organizationId], references: [id])
+  organizationId String?
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  @@index([organizationId])
 }
 
 model Transaction {
@@ -173,6 +278,7 @@ model Contact {
   organizationId String
   messages      Message[]
   agendas       Agenda[]
+  orders        Order[]
   tags          String   @default("")
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -292,7 +398,7 @@ model Agenda {
   contactId     String?
   
   createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime     @updatedAt
 }
 
 model SystemSetting {
@@ -301,18 +407,6 @@ model SystemSetting {
   value     String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-model BankAccount {
-  id            String         @id @default(uuid())
-  bankName      String
-  accountHolder String
-  iban          String
-  swift         String?
-  isActive      Boolean        @default(true)
-  subscriptions Subscription[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
 }
 
 // Playground Tables - Isolated from production
@@ -350,4 +444,82 @@ model PlaygroundMessage {
   content   String            @db.Text
   sender    String            // 'user' or 'agent'
   createdAt DateTime          @default(now())
+}
+
+// ============================================
+// E-COMMERCE MODELS (Products & Orders)
+// ============================================
+
+enum OrderStatus {
+  PENDING
+  AWAITING_PAYMENT
+  PROCESSING
+  SHIPPED
+  COMPLETED
+  REJECTED
+}
+
+model Product {
+  id             String       @id @default(uuid())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  
+  name           String
+  description    String       @db.Text
+  price          Decimal      @db.Decimal(10, 2)
+  imageUrl       String?
+  category       String?
+  
+  isPhysical     Boolean      @default(true)
+  stock          Int?         // Only used if isPhysical = true
+  isActive       Boolean      @default(true)
+  
+  orderItems     OrderItem[]
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  @@index([organizationId])
+  @@index([category])
+  @@index([isActive])
+}
+
+model Order {
+  id                String      @id @default(uuid())
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId    String
+  contact           Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId         String
+  
+  status            OrderStatus @default(PENDING)
+  rejectionReason   String?     @db.Text
+  
+  totalAmount       Decimal     @db.Decimal(10, 2)
+  deliveryAddress   String      @db.Text
+  paymentProofUrl   String?
+  
+  items             OrderItem[]
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  
+  @@index([organizationId])
+  @@index([contactId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id                  String   @id @default(uuid())
+  order               Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId             String
+  product             Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId           String
+  
+  quantity            Int
+  priceAtTime         Decimal  @db.Decimal(10, 2)
+  productNameSnapshot String
+  
+  @@index([orderId])
+  @@index([productId])
 }

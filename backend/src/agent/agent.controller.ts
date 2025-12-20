@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Inject } from '@nestjs/common';
 import { AgentService } from './agent.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
@@ -12,7 +12,7 @@ import { PlanGuard } from '../auth/guards/plan.guard';
 @UseGuards(JwtAuthGuard, PlanGuard)
 @Controller('agents')
 export class AgentController {
-    constructor(private readonly agentService: AgentService) { }
+    constructor(@Inject(AgentService) private readonly agentService: AgentService) { }
 
     @Post()
     @UseGuards(LimitGuard)

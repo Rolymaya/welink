@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Request, Inject } from '@nestjs/common';
 import { ContactService } from './contact.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -11,7 +11,7 @@ import { PlanGuard } from '../auth/guards/plan.guard';
 @UseGuards(JwtAuthGuard, PlanGuard)
 @Controller('contacts')
 export class ContactController {
-    constructor(private readonly contactService: ContactService) { }
+    constructor(@Inject(ContactService) private readonly contactService: ContactService) { }
 
     @Post()
     @UseGuards(LimitGuard)

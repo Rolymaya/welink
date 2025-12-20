@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Inject } from '@nestjs/common';
 import { PackagesService } from './packages.service';
 import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
@@ -10,7 +10,7 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 @ApiTags('packages')
 @Controller('packages')
 export class PackagesController {
-    constructor(private readonly packagesService: PackagesService) { }
+    constructor(@Inject(PackagesService) private readonly packagesService: PackagesService) { }
 
     // Public endpoint for landing page
     @Get('public')

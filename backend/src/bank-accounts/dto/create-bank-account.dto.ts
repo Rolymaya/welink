@@ -23,4 +23,8 @@ export class CreateBankAccountDto {
     @IsOptional()
     @IsBoolean()
     isActive?: boolean;
+
+    @IsOptional()
+    @IsString()
+    organizationId?: string;
 }

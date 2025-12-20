@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
@@ -11,9 +11,9 @@ import { EmailService } from '../email/email.service';
 @Injectable()
 export class AuthService {
     constructor(
-        private prisma: PrismaService,
-        private jwtService: JwtService,
-        private emailService: EmailService,
+        @Inject(PrismaService) private prisma: PrismaService,
+        @Inject(JwtService) private jwtService: JwtService,
+        @Inject(EmailService) private emailService: EmailService,
     ) { }
 
     async validateUser(email: string, pass: string): Promise<any> {

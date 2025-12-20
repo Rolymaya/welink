@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as nodemailer from 'nodemailer';
 
@@ -6,7 +6,7 @@ import * as nodemailer from 'nodemailer';
 export class EmailService {
     private readonly logger = new Logger(EmailService.name);
 
-    constructor(private prisma: PrismaService) { }
+    constructor(@Inject(PrismaService) private prisma: PrismaService) { }
 
     private async getTransporter() {
         const settings = await this.prisma.systemSetting.findMany({

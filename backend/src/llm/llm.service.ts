@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import OpenAI from 'openai';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class LLMService {
-    constructor(private prisma: PrismaService) { }
+    constructor(@Inject(PrismaService) private prisma: PrismaService) { }
 
     async generateResponse(
         provider: any, // LLMProvider from Prisma
@@ -99,67 +99,115 @@ export class LLMService {
         userMessage: string,
         organizationId?: string,
         agentId?: string,
+        functions?: any[], // OpenAI function definitions
     ): Promise<string> {
         try {
-            // Safe model extraction
-            let model = 'gpt-3.5-turbo'; // default
-            if (provider.model) {
-                model = provider.model;
-            } else if (provider.models) {
-                model = typeof provider.models === 'string'
-                    ? provider.models.split(',')[0]
-                    : provider.models[0];
-            } else if (provider.defaultModel) {
-                model = provider.defaultModel;
+            const openai = new OpenAI({ apiKey: provider.apiKey });
+            const modelName = provider.model || provider.defaultModel || 'gpt-3.5-turbo';
+
+            const messages: any[] = [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userMessage },
+            ];
+
+            const requestParams: any = {
+                model: modelName,
+                messages,
+            };
+
+            // Add functions if provided
+            if (functions && functions.length > 0) {
+                requestParams.tools = functions.map(func => ({ type: 'function', function: func }));
+                requestParams.tool_choice = 'auto';
             }
 
-            console.log('[LLM] Calling OpenAI with config:', {
-                model,
-                hasApiKey: !!provider.apiKey,
-                baseUrl: provider.baseUrl || 'default',
-            });
+            const completion = await openai.chat.completions.create(requestParams);
 
-            const config: any = { apiKey: provider.apiKey };
-            if (provider.baseUrl) {
-                config.baseURL = provider.baseUrl;
+            const responseMessage = completion.choices[0].message;
+
+            // Check if the model wants to call a function
+            if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
+                const toolCall = responseMessage.tool_calls[0]; // Assuming one tool call for simplicity
+                return JSON.stringify({
+                    type: 'function_call',
+                    function: toolCall.function.name,
+                    arguments: JSON.parse(toolCall.function.arguments),
+                });
             }
 
-            const openai = new OpenAI(config);
+            const responseText = responseMessage.content || 'Desculpe, não consegui gerar uma resposta.';
 
-            console.log('[LLM] Sending request to OpenAI, model:', model);
-
-            const completion = await openai.chat.completions.create({
-                model,
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: userMessage },
-                ],
-            });
-
-            console.log('[LLM] OpenAI response received successfully');
-
-            const usage = completion.usage;
-            if (usage) {
-                await this.logUsage(
-                    provider.id,
-                    model,
-                    usage.prompt_tokens,
-                    usage.completion_tokens,
-                    organizationId,
-                    agentId
-                );
+            // Log usage
+            if (provider && provider.id && typeof provider.id === 'string') {
+                const usage = completion.usage;
+                if (usage) {
+                    await this.logUsage(
+                        provider.id,
+                        modelName,
+                        usage.prompt_tokens,
+                        usage.completion_tokens,
+                        organizationId,
+                        agentId
+                    );
+                }
+            } else {
+                console.warn('[LLM] Skipping usage log: Invalid provider ID');
             }
 
-            return completion.choices[0].message.content || 'No response generated';
+            return responseText;
         } catch (error: any) {
-            console.error('[LLM] OpenAI API error details:', {
-                message: error.message,
-                status: error.status,
-                type: error.type,
-                code: error.code,
-                fullError: JSON.stringify(error, null, 2),
-            });
+            console.error('OpenAI API error:', error);
             throw new Error(`Failed to generate response from OpenAI: ${error.message}`);
+        }
+    }
+
+    async generateResponseWithFunctions(
+        provider: any,
+        systemPrompt: string,
+        userMessage: string,
+        functions: any[],
+        context?: string,
+        organizationId?: string,
+        agentId?: string,
+    ): Promise<any> {
+        const fullSystemPrompt = context
+            ? `${systemPrompt}\n\nContexto relevante:\n${context}`
+            : systemPrompt;
+
+        const providerName = (provider.provider || provider.name || '').toLowerCase();
+
+        if (providerName.includes('openai') || providerName.includes('gpt')) {
+            const response = await this.callOpenAI(
+                provider,
+                fullSystemPrompt,
+                userMessage,
+                organizationId,
+                agentId,
+                functions
+            );
+
+            // Try to parse as function call
+            try {
+                const parsed = JSON.parse(response);
+                if (parsed.type === 'function_call') {
+                    return parsed;
+                }
+            } catch {
+                // Not a function call, return as text
+            }
+
+            return { type: 'text', content: response };
+        } else {
+            // Fallback for providers without function calling
+            const response = await this.generateResponse(
+                provider,
+                fullSystemPrompt,
+                userMessage,
+                context,
+                organizationId,
+                agentId
+            );
+            return { type: 'text', content: response };
         }
     }
 }

@@ -16,7 +16,11 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { EmailModule } from './email/email.module';
 import { PlaygroundModule } from './playground/playground.module';
 import { BankAccountsModule } from './bank-accounts/bank-accounts.module';
+import { AffiliatesModule } from './affiliates/affiliates.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { StorageModule } from './storage/storage.module';
+import { ProductsModule } from './products/products.module';
+import { OrdersModule } from './orders/orders.module';
 
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -51,6 +55,10 @@ import { join } from 'path';
         EmailModule,
         PlaygroundModule,
         BankAccountsModule,
+        AffiliatesModule,
+        ProductsModule,
+        OrdersModule,
+        StorageModule,
     ],
     controllers: [],
     providers: [],

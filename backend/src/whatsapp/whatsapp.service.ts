@@ -12,6 +12,8 @@ import { LLMService } from '../llm/llm.service';
 import { AgendaService } from '../agenda/agenda.service';
 import { VectorStoreService } from '../knowledge/vector-store.service';
 import { IngestionService } from '../knowledge/ingestion.service';
+import { AgentToolsService } from '../agent/agent-tools.service';
+import { HybridAgentService } from './hybrid-agent.service';
 
 import { downloadMediaMessage } from '@whiskeysockets/baileys';
 import axios from 'axios';
@@ -30,6 +32,8 @@ export class WhatsAppService implements OnModuleInit {
         private agendaService: AgendaService,
         private vectorStoreService: VectorStoreService,
         private ingestionService: IngestionService,
+        private agentToolsService: AgentToolsService,
+        private hybridAgent: HybridAgentService,
     ) { }
 
     async onModuleInit() {
@@ -279,6 +283,33 @@ export class WhatsAppService implements OnModuleInit {
             await sock.sendPresenceUpdate('composing', remoteJid);
         }
 
+        // USE HYBRID AGENT ARCHITECTURE
+        try {
+            const finalResponse = await this.hybridAgent.processMessage(
+                text,
+                contact.id,
+                session.agent.organizationId,
+                session.agent.prompt
+            );
+
+            if (sock) {
+                await sock.sendPresenceUpdate('paused', remoteJid);
+                await sock.sendMessage(remoteJid, { text: finalResponse });
+                await this.prisma.message.create({
+                    data: { content: finalResponse, role: 'ASSISTANT', sessionId, contactId: contact.id }
+                });
+            }
+        } catch (error) {
+            console.error('[WhatsApp] Error:', error);
+            if (sock) {
+                await sock.sendMessage(remoteJid, { text: 'Desculpe, erro técnico.' });
+            }
+        }
+
+        console.log('[WhatsApp] FINISHED');
+        return; // STOP HERE - rest is old code
+
+
         // 4.5 Search Knowledge Base (RAG)
         let context = '';
         try {
@@ -341,21 +372,119 @@ The date must be in the future. If the user didn't specify a date, ask for it. D
 DO NOT ask the user if they want to schedule something unless they have already brought up the topic.
 `;
             const historyPrompt = historyContext ? `\n\nConversation History:\n${historyContext}` : '';
-            const fullSystemPrompt = session.agent.prompt + historyPrompt + schedulingInstruction;
 
-            const aiResponse = await this.llmService.generateResponse(
+            const workflowInstructions = `
+REGRAS OBRIGATÓRIAS:
+1. Quando o cliente mencionar um produto, SEMPRE chame catalog_search primeiro
+2. Use SEMPRE o campo "id" (UUID) do catalog_search nas outras ferramentas
+3. NUNCA mencione IDs técnicos (UUIDs) ou códigos ao cliente
+4. NUNCA mencione: "Armazenamento", "categoria"
+5. Seja natural e direto: mostre nome e preço
+
+EXEMPLO CORRETO:
+Cliente: "Quero Samsung A14"
+Você: [chama catalog_search]
+Você: "Temos Samsung A14 a 1.000kz. Quantas unidades quer?"
+Cliente: "2, Calemba 2"
+Você: [chama create_order]
+Você: "Pedido criado! Total: 2.000kz. Entrega em Calemba 2."
+
+NUNCA FAÇA:
+❌ "O ID do produto é 71c884e1..."
+❌ "Armazenamento 124GB"
+❌ "categoria Smartphone"
+✅ "Temos Samsung A14 a 1.000kz. Quantas quer?"
+`;
+
+            const fullSystemPrompt = workflowInstructions + '\n' + session.agent.prompt + historyPrompt + schedulingInstruction;
+
+            // Get function definitions
+            const functions = this.agentToolsService.getFunctionDefinitions();
+
+            const aiResponse = await this.llmService.generateResponseWithFunctions(
                 provider,
                 fullSystemPrompt,
                 text,
-                context, // Pass context to LLM
+                functions,
+                context,
             );
 
-            console.log('[WhatsApp] AI response generated:', aiResponse.substring(0, 100) + '...');
+            console.log('[WhatsApp] AI response type:', aiResponse.type);
+
+            let finalResponse = '';
+
+            // Handle function calls
+            if (aiResponse.type === 'function_call') {
+                const functionName = aiResponse.function;
+                const args = aiResponse.arguments;
+                console.log(`[WhatsApp] Function call: ${functionName}`, args);
+
+                let toolResult = null;
+
+                try {
+                    switch (functionName) {
+                        case 'catalog_search':
+                            toolResult = await this.agentToolsService.catalogSearch(
+                                session.agent.organizationId,
+                                args.query,
+                                args.category
+                            );
+                            break;
+                        case 'check_availability':
+                            toolResult = await this.agentToolsService.checkAvailability(
+                                args.productId,
+                                args.quantity
+                            );
+                            break;
+                        case 'create_order':
+                            toolResult = await this.agentToolsService.createOrder(
+                                session.agent.organizationId,
+                                contact.id,
+                                args.items,
+                                args.deliveryAddress
+                            );
+                            break;
+                        case 'get_order_status':
+                            toolResult = await this.agentToolsService.getOrderStatus(contact.id);
+                            break;
+                        case 'get_bank_accounts':
+                            toolResult = await this.agentToolsService.getBankAccounts(session.agent.organizationId);
+                            break;
+                        case 'schedule_follow_up':
+                            toolResult = await this.agentToolsService.scheduleFollowUp(
+                                session.agent.organizationId,
+                                contact.id,
+                                args.query
+                            );
+                            break;
+                        default:
+                            toolResult = { error: `Function ${functionName} not found` };
+                    }
+                } catch (error) {
+                    console.error(`[WhatsApp] Tool execution failed:`, error);
+                    toolResult = { error: error.message };
+                }
+
+                // Generate final response with tool result
+                const toolResultStr = JSON.stringify(toolResult);
+                const followUpPrompt = `The tool ${functionName} returned: ${toolResultStr}\n\nNow respond to the user in Portuguese explaining the result.`;
+
+                finalResponse = await this.llmService.generateResponse(
+                    provider,
+                    fullSystemPrompt,
+                    followUpPrompt,
+                    context,
+                );
+            } else {
+                // Text response
+                finalResponse = aiResponse.content || aiResponse;
+            }
+
+            console.log('[WhatsApp] Final response:', finalResponse.substring(0, 100) + '...');
 
             // Check for [SCHEDULE] block
-            let finalResponse = aiResponse;
             const scheduleRegex = /\[SCHEDULE\]([\s\S]*?)\[\/SCHEDULE\]/;
-            const match = aiResponse.match(scheduleRegex);
+            const match = finalResponse.match(scheduleRegex);
 
             if (match) {
                 try {
@@ -373,7 +502,7 @@ DO NOT ask the user if they want to schedule something unless they have already 
                     });
 
                     // Remove the block from the response sent to user
-                    finalResponse = aiResponse.replace(scheduleRegex, '').trim();
+                    finalResponse = finalResponse.replace(scheduleRegex, '').trim();
                 } catch (e) {
                     console.error('[WhatsApp] Failed to parse schedule JSON:', e);
                 }

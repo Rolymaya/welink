@@ -20,9 +20,9 @@ export class IngestionService {
     private readonly logger = new Logger(IngestionService.name);
 
     constructor(
-        private configService: ConfigService,
-        private vectorStore: VectorStoreService,
-        private prisma: PrismaService,
+        @Inject(ConfigService) private configService: ConfigService,
+        @Inject(VectorStoreService) private vectorStore: VectorStoreService,
+        @Inject(PrismaService) private prisma: PrismaService,
         @Inject(forwardRef(() => LLMProviderService))
         private llmProviderService: LLMProviderService,
     ) { }
@@ -202,5 +202,35 @@ export class IngestionService {
             where: { id },
             data: { status, errorMessage },
         });
+    }
+    async indexProduct(product: any, orgId: string) {
+        try {
+            const content = `Produto: ${product.name}
+Preço: ${product.price}
+Categoria: ${product.category || 'Geral'}
+Status: ${product.isActive ? 'Ativo' : 'Inativo'}
+Tipo: ${product.isPhysical ? 'Físico' : 'Digital'}
+Estoque: ${product.stock || 0}
+Descrição: ${product.description || 'Sem descrição'}`;
+
+            const embeddings = await this.getEmbeddings();
+            const embedding = await embeddings.embedQuery(content);
+
+            await this.vectorStore.addVectors([{
+                id: product.id, // Direct mapping allows overwrites
+                vector: embedding,
+                properties: {
+                    content,
+                    kbId: 'system-products', // Virtual KB ID for products
+                    orgId,
+                    source: `product:${product.id}`,
+                    chunkIndex: 0,
+                },
+            }]);
+
+            this.logger.log(`Product ${product.id} indexed (${product.name})`);
+        } catch (error) {
+            this.logger.error(`Failed to index product ${product.id}:`, error);
+        }
     }
 }

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger, OnModuleInit, Inject } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { PrismaService } from '../prisma/prisma.service';
@@ -12,10 +12,10 @@ export class PlaygroundService implements OnModuleInit {
     private readonly logger = new Logger(PlaygroundService.name);
 
     constructor(
-        private prisma: PrismaService,
-        private llmService: LLMService,
-        private schedulerRegistry: SchedulerRegistry,
-        private playgroundWhatsappService: PlaygroundWhatsAppService,
+        @Inject(PrismaService) private prisma: PrismaService,
+        @Inject(LLMService) private llmService: LLMService,
+        @Inject(SchedulerRegistry) private schedulerRegistry: SchedulerRegistry,
+        @Inject(PlaygroundWhatsAppService) private playgroundWhatsappService: PlaygroundWhatsAppService,
     ) { }
 
     async onModuleInit() {
@@ -23,14 +23,14 @@ export class PlaygroundService implements OnModuleInit {
     }
 
     async setupCleanupJob() {
-        const setting = await this.prisma.systemSetting.findUnique({
-            where: { key: 'PLAYGROUND_CLEANUP_SCHEDULE' },
-        });
-
-        // Default: every day at 3 AM (0 3 * * *)
-        const cronExpression = setting?.value || '0 3 * * *';
-
         try {
+            const setting = await this.prisma.systemSetting?.findUnique({
+                where: { key: 'PLAYGROUND_CLEANUP_SCHEDULE' },
+            });
+
+            // Default: every day at 3 AM (0 3 * * *)
+            const cronExpression = setting?.value || '0 3 * * *';
+
             // Remove existing job if it exists
             try {
                 const existingJob = this.schedulerRegistry.getCronJob('playground-cleanup');

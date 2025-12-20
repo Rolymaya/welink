@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Inject } from '@nestjs/common';
 import { SuperAdminService } from './super-admin.service';
 import { CreateLLMProviderDto } from './dto/create-llm-provider.dto';
 import { UpdateLLMProviderDto } from './dto/update-llm-provider.dto';
@@ -14,7 +14,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 @Roles(Role.SUPER_ADMIN)
 @Controller('super-admin')
 export class SuperAdminController {
-    constructor(private readonly superAdminService: SuperAdminService) { }
+    constructor(@Inject(SuperAdminService) private readonly superAdminService: SuperAdminService) { }
 
     @Post('providers')
     create(@Body() createDto: CreateLLMProviderDto) {

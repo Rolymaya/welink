@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterOrganizationDto } from './dto/register-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
@@ -6,9 +6,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class OrganizationService {
-    constructor(private prisma: PrismaService) { }
+    constructor(@Inject(PrismaService) private prisma: PrismaService) { }
 
-    async create(userId: string, dto: RegisterOrganizationDto, logoFile?: Express.Multer.File) {
+    async create(userId: string, dto: RegisterOrganizationDto, logoFile?: Express.Multer.File, referralCode?: string) {
         // Generate a slug from name
         const slug = dto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + uuidv4().substring(0, 4);
 
@@ -37,6 +37,31 @@ export class OrganizationService {
             where: { id: userId },
             data: { role: 'COMPANY_ADMIN' },
         });
+
+        // Bind to affiliate if referral code provided
+        if (referralCode) {
+            try {
+                const affiliateProfile = await this.prisma.affiliateProfile.findUnique({
+                    where: { referralCode },
+                });
+
+                if (affiliateProfile) {
+                    await this.prisma.affiliateReferral.create({
+                        data: {
+                            referrerId: affiliateProfile.id,
+                            referredOrgId: organization.id,
+                            status: 'ACTIVE',
+                        },
+                    });
+                    console.log(`✅ Organization ${organization.id} bound to affiliate ${affiliateProfile.id}`);
+                } else {
+                    console.warn(`⚠️  Referral code ${referralCode} not found`);
+                }
+            } catch (error) {
+                console.error('Error binding referral:', error);
+                // Don't fail organization creation if referral binding fails
+            }
+        }
 
         return organization;
     }
@@ -104,6 +129,16 @@ export class OrganizationService {
     }
 
     async getDashboardStats(orgId: string) {
+        if (!orgId) {
+            return {
+                agents: { total: 0, active: 0, paused: 0 },
+                messages: { today: 0 },
+                sessions: { total: 0, connected: 0 },
+                upcomingAppointments: 0,
+                recentActivity: []
+            };
+        }
+
         // Get today's start and end
         const today = new Date();
         today.setHours(0, 0, 0, 0);

@@ -11,10 +11,12 @@ export class PlaygroundWhatsAppService {
     private sessions = new Map<string, any>();
 
     constructor(
-        private prisma: PrismaService,
+        @Inject(PrismaService) private prisma: PrismaService,
         @Inject(forwardRef(() => LLMService))
         private llmService: LLMService,
     ) { }
+
+    private retryCounts = new Map<string, number>();
 
     async createSession(sessionId: string) {
         const sessionDir = path.join(__dirname, '../../sessions', sessionId);
@@ -25,11 +27,39 @@ export class PlaygroundWhatsAppService {
         const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
         const { version } = await fetchLatestBaileysVersion();
 
+        // Close existing socket if any to prevent conflict
+        const existingSock = this.sessions.get(sessionId);
+        if (existingSock) {
+            try {
+                existingSock.ws?.close();
+                existingSock.end(undefined);
+            } catch (e) {
+                console.log(`[Playground] Ignored error during socket cleanup for ${sessionId}: ${(e as any)?.message}`);
+            }
+            this.sessions.delete(sessionId);
+        }
+
+        // Check for DNS/Network connectivity before attempting socket creation
+        try {
+            await new Promise((resolve, reject) => {
+                require('dns').lookup('web.whatsapp.com', (err) => {
+                    if (err) reject(err);
+                    else resolve(true);
+                });
+            });
+        } catch (dnsError) {
+            console.error(`[Playground] DNS Error looking up web.whatsapp.com: ${dnsError}`);
+            setTimeout(() => this.createSession(sessionId), 5000);
+            return;
+        }
+
         const sock = makeWASocket({
             version,
             auth: state,
             printQRInTerminal: false,
-            browser: ['SaaS AI Agent', 'Chrome', '1.0.0'],
+            browser: ['SaaS AI Agent (Playground)', 'Chrome', '1.0.0'],
+            connectTimeoutMs: 60000,
+            retryRequestDelayMs: 2000,
         });
 
         this.sessions.set(sessionId, sock);
@@ -40,7 +70,8 @@ export class PlaygroundWhatsAppService {
             const { connection, lastDisconnect, qr } = update;
 
             if (qr) {
-                // Update session with QR code (store as text for frontend to render)
+                // Reset retries on new QR
+                this.retryCounts.set(sessionId, 0);
                 await this.prisma.playgroundSession.update({
                     where: { id: sessionId },
                     data: { qrCode: qr, status: 'QR_READY' },
@@ -48,17 +79,61 @@ export class PlaygroundWhatsAppService {
             }
 
             if (connection === 'close') {
-                const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
-                console.log('[Playground] Connection closed:', lastDisconnect?.error, 'reconnecting:', shouldReconnect);
+                const boomError = (lastDisconnect?.error as Boom)?.output;
+                const statusCode = boomError?.statusCode;
+                const errorMessage = (lastDisconnect?.error as any)?.message || '';
 
-                if (shouldReconnect) {
-                    this.createSession(sessionId);
-                } else {
+                // Conflict: 515 OR 'conflict' in message
+                // CRITIAL FIX: Even if status is 401, if message has 'conflict', treat as Conflict (Retryable)
+                const isConflict = statusCode === 515 || errorMessage.includes('conflict');
+
+                // LoggedOut: 401 or loggedOut, BUT NOT if it's a conflict
+                const isLoggedOut = (statusCode === DisconnectReason.loggedOut || statusCode === 401) && !isConflict;
+
+                console.log(`[Playground] Connection closed: ${lastDisconnect?.error}, statusCode: ${statusCode}, Error: ${errorMessage}`);
+
+                let shouldRetry = true;
+
+                if (isLoggedOut) {
+                    console.log(`[Playground] Fatal Logout detected (Status ${statusCode}). No conflict message.`);
+                    shouldRetry = false;
+                }
+
+                if (shouldRetry) {
+                    const currentRetries = this.retryCounts.get(sessionId) || 0;
+
+                    if (isConflict) {
+                        if (currentRetries >= 5) {
+                            console.log(`[Playground] Max retries (${currentRetries}) reached for Conflict (${statusCode}). Giving up.`);
+                            shouldRetry = false;
+                        } else {
+                            console.log(`[Playground] Conflict detected (Status ${statusCode}). Retry ${currentRetries + 1}/5...`);
+                            this.retryCounts.set(sessionId, currentRetries + 1);
+                            const delay = Math.floor(Math.random() * 2000) + 1000;
+                            setTimeout(() => this.createSession(sessionId), delay);
+                            return;
+                        }
+                    } else {
+                        // Normal reconnect
+                        console.log(`[Playground] Transient error (Status ${statusCode}). Reconnecting now.`);
+                        this.createSession(sessionId);
+                        return;
+                    }
+                }
+
+                if (!shouldRetry) {
                     try {
                         await this.prisma.playgroundSession.update({
                             where: { id: sessionId },
                             data: { status: 'DISCONNECTED' },
                         });
+
+                        // If fatal error, cleanup
+                        if (isLoggedOut || (isConflict && (this.retryCounts.get(sessionId) || 0) >= 5)) {
+                            console.log(`[Playground] Cleaning up session files for ${sessionId} due to fatal error.`);
+                            this.deleteSession(sessionId).catch(e => console.error('Failed to cleanup session files', e));
+                            this.retryCounts.delete(sessionId);
+                        }
                     } catch (e) {
                         console.log(`[Playground] Could not update session ${sessionId} (might be deleted)`);
                     }
@@ -66,6 +141,8 @@ export class PlaygroundWhatsAppService {
                 }
             } else if (connection === 'open') {
                 console.log('[Playground] Connection opened for session:', sessionId);
+                // Reset retries
+                this.retryCounts.set(sessionId, 0);
                 await this.prisma.playgroundSession.update({
                     where: { id: sessionId },
                     data: { status: 'CONNECTED', qrCode: null },
@@ -198,7 +275,11 @@ export class PlaygroundWhatsAppService {
             }
 
             // Send typing indicator
-            await sock.sendPresenceUpdate('composing', remoteJid);
+            try {
+                await sock.sendPresenceUpdate('composing', remoteJid);
+            } catch (e) {
+                console.log('[Playground] Failed to send presence update (composing):', (e as any)?.message);
+            }
 
             // Fetch conversation history from database
             const whatsappNumber = remoteJid.split('@')[0];
@@ -237,7 +318,11 @@ export class PlaygroundWhatsAppService {
             );
 
             // Stop typing indicator
-            await sock.sendPresenceUpdate('paused', remoteJid);
+            try {
+                await sock.sendPresenceUpdate('paused', remoteJid);
+            } catch (e) {
+                console.log('[Playground] Failed to send presence update (paused):', (e as any)?.message);
+            }
 
             // Send AI response
             await sock.sendMessage(remoteJid, { text: response });

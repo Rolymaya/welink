@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Patch, UseGuards, Request, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Body, Get, Patch, UseGuards, Request, UseInterceptors, UploadedFile, Inject } from '@nestjs/common';
 import { OrganizationService } from './organization.service';
 import { RegisterOrganizationDto } from './dto/register-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
@@ -14,8 +14,8 @@ import { AuthService } from '../auth/auth.service';
 @Controller('organization')
 export class OrganizationController {
     constructor(
-        private readonly organizationService: OrganizationService,
-        private readonly authService: AuthService
+        @Inject(OrganizationService) private readonly organizationService: OrganizationService,
+        @Inject(AuthService) private readonly authService: AuthService
     ) { }
 
     @Get()
@@ -30,7 +30,10 @@ export class OrganizationController {
     @UseInterceptors(FileInterceptor('logo'))
     @ApiConsumes('multipart/form-data')
     async register(@Request() req, @Body() dto: RegisterOrganizationDto, @UploadedFile() logo: Express.Multer.File) {
-        const organization = await this.organizationService.create(req.user.id, dto, logo);
+        // Extract referral code from body if present
+        const referralCode = (dto as any).referralCode;
+
+        const organization = await this.organizationService.create(req.user.id, dto, logo, referralCode);
 
         // Login user to get new token with updated role and organizationId
         const updatedUser = {

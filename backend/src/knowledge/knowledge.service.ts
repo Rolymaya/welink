@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { IngestionService } from './ingestion.service';
 import { VectorStoreService } from './vector-store.service';
@@ -9,13 +9,12 @@ import { KBType, KBStatus } from '@prisma/client';
 @Injectable()
 export class KnowledgeService {
     constructor(
-        private prisma: PrismaService,
-        private ingestionService: IngestionService,
-        private vectorStore: VectorStoreService,
+        @Inject(PrismaService) private prisma: PrismaService,
+        @Inject(IngestionService) private ingestionService: IngestionService,
+        @Inject(VectorStoreService) private vectorStore: VectorStoreService,
     ) { }
 
     async createFromFile(orgId: string, dto: CreateKBDto, file: Express.Multer.File) {
-        // 1. Create KB record
         const kb = await this.prisma.knowledgeBase.create({
             data: {
                 name: dto.name,
@@ -25,25 +24,20 @@ export class KnowledgeService {
             },
         });
 
-        // 2. Trigger async processing
         const fs = require('fs');
         const path = require('path');
         const uploadDir = path.join(process.cwd(), 'uploads');
         const tempPath = path.join(uploadDir, `${kb.id}-${file.originalname}`);
 
         try {
-            // Ensure uploads dir exists
             if (!fs.existsSync(uploadDir)) {
                 fs.mkdirSync(uploadDir, { recursive: true });
             }
 
             fs.writeFileSync(tempPath, file.buffer);
-
-            // Don't await this, let it run in background
             this.ingestionService.processFile(kb.id, tempPath, file.mimetype, orgId);
         } catch (error) {
             console.error('Error saving file for processing:', error);
-            // Update KB status to ERROR if initial save fails
             await this.prisma.knowledgeBase.update({
                 where: { id: kb.id },
                 data: { status: KBStatus.ERROR, errorMessage: 'Failed to save uploaded file' }
@@ -94,7 +88,6 @@ export class KnowledgeService {
             throw new NotFoundException('Knowledge Base not found');
         }
 
-        // 1. Try to delete vectors from Weaviate (but don't fail if it errors)
         try {
             console.log(`[KnowledgeService] Deleting vectors from Weaviate for KB: ${id}`);
             const result = await this.vectorStore.deleteByKbId(id);
@@ -103,7 +96,6 @@ export class KnowledgeService {
             console.error('Error deleting from Weaviate (continuing anyway):', error);
         }
 
-        // 2. Delete from DB (Cascade will handle vectors table)
         console.log(`[KnowledgeService] Deleting KB from database: ${id}`);
         const deleted = await this.prisma.knowledgeBase.delete({
             where: { id },
@@ -117,8 +109,8 @@ export class KnowledgeService {
         // 1. Generate embedding for query
         const embedding = await this.ingestionService.embedQuery(query);
 
-        // 2. Search in Weaviate
-        const results = await this.vectorStore.search(embedding, orgId, limit);
+        // 2. Search in Weaviate (EXCLUDE PRODUCTS!)
+        const results = await this.vectorStore.searchKnowledgeOnly(embedding, orgId, limit);
 
         // 3. Format results
         return results.data.Get.KnowledgeChunk.map((item: any) => ({

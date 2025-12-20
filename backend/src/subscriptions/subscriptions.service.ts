@@ -1,19 +1,21 @@
-import { Injectable, BadRequestException, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, OnModuleInit, Inject } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { ApproveSubscriptionDto } from './dto/approve-subscription.dto';
 import { EmailService } from '../email/email.service';
+import { AffiliatesService } from '../affiliates/affiliates.service';
 
 @Injectable()
 export class SubscriptionsService implements OnModuleInit {
     private readonly logger = new Logger(SubscriptionsService.name);
 
     constructor(
-        private prisma: PrismaService,
-        private schedulerRegistry: SchedulerRegistry,
-        private emailService: EmailService,
+        @Inject(PrismaService) private prisma: PrismaService,
+        @Inject(SchedulerRegistry) private schedulerRegistry: SchedulerRegistry,
+        @Inject(EmailService) private emailService: EmailService,
+        @Inject(AffiliatesService) private affiliatesService: AffiliatesService,
     ) { }
 
     async onModuleInit() {
@@ -228,6 +230,13 @@ export class SubscriptionsService implements OnModuleInit {
                     maxContacts: subscription.package.maxContacts,
                 },
             });
+
+            // 4. Process affiliate commission (if applicable)
+            try {
+                await this.affiliatesService.processCommission(subscription.organizationId);
+            } catch (error) {
+                this.logger.warn(`Failed to process affiliate commission: ${error.message}`);
+            }
         } else if (dto.status === 'CANCELLED') {
             await this.prisma.transaction.updateMany({
                 where: {
@@ -267,33 +276,38 @@ export class SubscriptionsService implements OnModuleInit {
 
     // Cron Job Setup
     async setupExpirationJob() {
-        const setting = await this.prisma.systemSetting.findUnique({
-            where: { key: 'SUBSCRIPTION_EXPIRATION_SCHEDULE' },
-        });
-
-        // Default: every day at 1 AM (0 1 * * *)
-        const cronExpression = setting?.value || '0 1 * * *';
-
         try {
-            // Remove existing job if it exists
-            try {
-                const existingJob = this.schedulerRegistry.getCronJob('subscription-expiration');
-                existingJob.stop();
-                this.schedulerRegistry.deleteCronJob('subscription-expiration');
-            } catch (e) {
-                // Job doesn't exist yet, that's fine
-            }
-
-            // Create new cron job
-            const job = new CronJob(cronExpression, () => {
-                this.logger.log('Running scheduled subscription expiration check...');
-                this.expireSubscriptions();
+            const setting = await this.prisma.systemSetting?.findUnique({
+                where: { key: 'SUBSCRIPTION_EXPIRATION_SCHEDULE' },
             });
 
-            this.schedulerRegistry.addCronJob('subscription-expiration', job);
-            job.start();
+            // Default: every day at 1 AM (0 1 * * *)
+            const cronExpression = setting?.value || '0 1 * * *';
 
-            this.logger.log(`Subscription expiration scheduled with cron: ${cronExpression}`);
+            try {
+                // Remove existing job if it exists
+                // Use optional chaining for safe scheduler access just in case
+                try {
+                    const existingJob = this.schedulerRegistry.getCronJob('subscription-expiration');
+                    existingJob.stop();
+                    this.schedulerRegistry.deleteCronJob('subscription-expiration');
+                } catch (e) {
+                    // Job doesn't exist yet, that's fine
+                }
+
+                // Create new cron job
+                const job = new CronJob(cronExpression, () => {
+                    this.logger.log('Running scheduled subscription expiration check...');
+                    this.expireSubscriptions();
+                });
+
+                this.schedulerRegistry.addCronJob('subscription-expiration', job);
+                job.start();
+
+                this.logger.log(`Subscription expiration scheduled with cron: ${cronExpression}`);
+            } catch (error) {
+                this.logger.error(`Failed to setup expiration job inner: ${error.message}`);
+            }
         } catch (error) {
             this.logger.error(`Failed to setup expiration job: ${error.message}`);
         }

@@ -8,7 +8,7 @@ import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 @Injectable()
 export class SuperAdminService {
     constructor(
-        private prisma: PrismaService,
+        @Inject(PrismaService) private prisma: PrismaService,
         @Inject(forwardRef(() => PlaygroundService))
         private playgroundService: PlaygroundService,
         @Inject(forwardRef(() => SubscriptionsService))

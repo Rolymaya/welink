@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request, UseInterceptors, UploadedFile, Inject } from '@nestjs/common';
 import { KnowledgeService } from './knowledge.service';
 import { CreateKBDto } from './dto/create-kb.dto';
 import { CreateUrlKBDto } from './dto/create-url-kb.dto';
@@ -11,7 +11,7 @@ import { ApiTags, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 @Controller('knowledge')
 @UseGuards(JwtAuthGuard)
 export class KnowledgeController {
-    constructor(private readonly knowledgeService: KnowledgeService) { }
+    constructor(@Inject(KnowledgeService) private readonly knowledgeService: KnowledgeService) { }
 
     @Post('upload')
     @UseInterceptors(FileInterceptor('file'))

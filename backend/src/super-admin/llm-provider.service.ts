@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class LLMProviderService {
-    constructor(private prisma: PrismaService) { }
+    constructor(@Inject(PrismaService) private prisma: PrismaService) { }
 
     async getActiveProvider(preferredProvider?: string) {
         // Logic:
@@ -35,6 +35,7 @@ export class LLMProviderService {
         }
 
         return {
+            id: provider.id,
             provider: provider.name,
             apiKey: provider.apiKey,
             baseUrl: provider.baseUrl,
@@ -44,3 +45,4 @@ export class LLMProviderService {
         };
     }
 }
+

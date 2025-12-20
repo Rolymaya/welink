@@ -7,6 +7,17 @@ import { json, urlencoded } from 'express';
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
+    // Global Error Handlers to prevent crash on transient socket errors
+    process.on('uncaughtException', (err) => {
+        console.error('Uncaught Exception:', err);
+        // Prevent exit
+    });
+
+    process.on('unhandledRejection', (reason, promise) => {
+        console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+        // Prevent exit
+    });
+
     // Increase payload limit
     app.use(json({ limit: '50mb' }));
     app.use(urlencoded({ extended: true, limit: '50mb' }));
@@ -28,14 +39,14 @@ async function bootstrap() {
     });
 
     // Swagger Setup
-    const config = new DocumentBuilder()
-        .setTitle('SaaS AI Agent Platform API')
-        .setDescription('The API description for the AI Agent SaaS')
-        .setVersion('1.0')
-        .addBearerAuth()
-        .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
+    // const config = new DocumentBuilder()
+    //     .setTitle('SaaS AI Agent Platform API')
+    //     .setDescription('The API description for the AI Agent SaaS')
+    //     .setVersion('1.0')
+    //     .addBearerAuth()
+    //     .build();
+    // const document = SwaggerModule.createDocument(app, config);
+    // SwaggerModule.setup('api/docs', app, document);
 
     const port = process.env.PORT || 3001;
     await app.listen(port, '0.0.0.0');

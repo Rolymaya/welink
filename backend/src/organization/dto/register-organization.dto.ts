@@ -16,4 +16,9 @@ export class RegisterOrganizationDto {
     @IsOptional()
     @IsString()
     description?: string;
+
+    @ApiPropertyOptional({ example: 'REF-123', description: 'Referral code from affiliate' })
+    @IsOptional()
+    @IsString()
+    referralCode?: string;
 }

@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBankAccountDto } from './dto/create-bank-account.dto';
 import { UpdateBankAccountDto } from './dto/update-bank-account.dto';
 
 @Injectable()
 export class BankAccountsService {
-    constructor(private prisma: PrismaService) { }
+    constructor(@Inject(PrismaService) private prisma: PrismaService) { }
 
     async create(createBankAccountDto: CreateBankAccountDto) {
         return this.prisma.bankAccount.create({
@@ -19,9 +19,14 @@ export class BankAccountsService {
         });
     }
 
-    async findActive() {
+    async findActive(organizationId?: string) {
         return this.prisma.bankAccount.findMany({
-            where: { isActive: true },
+            where: {
+                isActive: true,
+                organizationId: organizationId || null // If orgId is provided, use it. If not, look for global (null) or handle as needed. 
+                // Actually, for the Agent, we want SPECIFIC org accounts.
+                // If organizationId is undefined, it might mean "Super Admin" context searching for global accounts.
+            },
             orderBy: { createdAt: 'desc' },
         });
     }

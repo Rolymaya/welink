@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request, UseInterceptors, UploadedFile, Inject } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { SubscriptionsService } from './subscriptions.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
@@ -16,7 +16,7 @@ import { Express } from 'express';
 @Controller('subscriptions')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SubscriptionsController {
-    constructor(private readonly subscriptionsService: SubscriptionsService) { }
+    constructor(@Inject(SubscriptionsService) private readonly subscriptionsService: SubscriptionsService) { }
 
     @Post()
     @Roles('COMPANY_ADMIN')

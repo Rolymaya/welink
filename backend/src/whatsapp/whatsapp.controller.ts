@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, UseGuards, Request, Query, UnauthorizedException, Delete } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, UseGuards, Request, Query, UnauthorizedException, Delete, Inject } from '@nestjs/common';
 import { WhatsAppService } from './whatsapp.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -13,8 +13,8 @@ import { PlanGuard } from '../auth/guards/plan.guard';
 @UseGuards(JwtAuthGuard, PlanGuard)
 export class WhatsAppController {
     constructor(
-        private readonly whatsappService: WhatsAppService,
-        private readonly prisma: PrismaService,
+        @Inject(WhatsAppService) private readonly whatsappService: WhatsAppService,
+        @Inject(PrismaService) private readonly prisma: PrismaService,
     ) { }
 
     @Post('session/create')

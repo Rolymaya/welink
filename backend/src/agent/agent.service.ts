@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
 import { UpdateAgentDto } from './dto/update-agent.dto';
@@ -8,9 +8,9 @@ import { LLMProviderService } from '../super-admin/llm-provider.service';
 @Injectable()
 export class AgentService {
     constructor(
-        private prisma: PrismaService,
-        private llmService: LLMService,
-        private llmProviderService: LLMProviderService,
+        @Inject(PrismaService) private prisma: PrismaService,
+        @Inject(LLMService) private llmService: LLMService,
+        @Inject(LLMProviderService) private llmProviderService: LLMProviderService,
     ) { }
 
     async create(orgId: string, createAgentDto: CreateAgentDto) {

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Inject, Request } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { BankAccountsService } from './bank-accounts.service';
 import { CreateBankAccountDto } from './dto/create-bank-account.dto';
@@ -12,11 +12,15 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @Controller('bank-accounts')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class BankAccountsController {
-    constructor(private readonly bankAccountsService: BankAccountsService) { }
+    constructor(@Inject(BankAccountsService) private readonly bankAccountsService: BankAccountsService) { }
 
     @Post()
-    @Roles('SUPER_ADMIN')
-    create(@Body() createBankAccountDto: CreateBankAccountDto) {
+    @Roles('SUPER_ADMIN', 'COMPANY_ADMIN')
+    create(@Body() createBankAccountDto: CreateBankAccountDto, @Request() req) {
+        // If Company Admin, force organizationId
+        if (req.user.role === 'COMPANY_ADMIN') {
+            createBankAccountDto.organizationId = req.user.organizationId;
+        }
         return this.bankAccountsService.create(createBankAccountDto);
     }
 
@@ -28,30 +32,32 @@ export class BankAccountsController {
 
     @Get('active')
     @Roles('COMPANY_ADMIN', 'SUPER_ADMIN')
-    findActive() {
-        return this.bankAccountsService.findActive();
+    findActive(@Request() req) {
+        // If Company Admin, filter by their Org
+        const orgId = req.user.role === 'COMPANY_ADMIN' ? req.user.organizationId : undefined;
+        return this.bankAccountsService.findActive(orgId);
     }
 
     @Get(':id')
-    @Roles('SUPER_ADMIN')
+    @Roles('SUPER_ADMIN', 'COMPANY_ADMIN')
     findOne(@Param('id') id: string) {
         return this.bankAccountsService.findOne(id);
     }
 
     @Patch(':id')
-    @Roles('SUPER_ADMIN')
+    @Roles('SUPER_ADMIN', 'COMPANY_ADMIN')
     update(@Param('id') id: string, @Body() updateBankAccountDto: UpdateBankAccountDto) {
         return this.bankAccountsService.update(id, updateBankAccountDto);
     }
 
     @Patch(':id/toggle')
-    @Roles('SUPER_ADMIN')
+    @Roles('SUPER_ADMIN', 'COMPANY_ADMIN')
     toggleActive(@Param('id') id: string) {
         return this.bankAccountsService.toggleActive(id);
     }
 
     @Delete(':id')
-    @Roles('SUPER_ADMIN')
+    @Roles('SUPER_ADMIN', 'COMPANY_ADMIN')
     remove(@Param('id') id: string) {
         return this.bankAccountsService.remove(id);
     }
