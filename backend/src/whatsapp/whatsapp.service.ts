@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import makeWASocket, { DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import * as fs from 'fs';
@@ -32,6 +32,7 @@ export class WhatsAppService implements OnModuleInit {
         private agendaService: AgendaService,
         private vectorStoreService: VectorStoreService,
         private ingestionService: IngestionService,
+        @Inject(forwardRef(() => AgentToolsService))
         private agentToolsService: AgentToolsService,
         private hybridAgent: HybridAgentService,
     ) { }
@@ -289,7 +290,7 @@ export class WhatsAppService implements OnModuleInit {
                 text,
                 contact.id,
                 session.agent.organizationId,
-                session.agent.prompt
+                session.agent.id
             );
 
             if (sock) {
@@ -302,247 +303,13 @@ export class WhatsAppService implements OnModuleInit {
         } catch (error) {
             console.error('[WhatsApp] Error:', error);
             if (sock) {
-                await sock.sendMessage(remoteJid, { text: 'Desculpe, erro técnico.' });
+                await sock.sendMessage(remoteJid, { text: 'Desculpe, tive um problema ao processar a sua mensagem.' });
             }
         }
 
         console.log('[WhatsApp] FINISHED');
-        return; // STOP HERE - rest is old code
+        return;
 
-
-        // 4.5 Search Knowledge Base (RAG)
-        let context = '';
-        try {
-            console.log('[WhatsApp] Searching Knowledge Base...');
-            const results = await this.knowledgeService.search(text, session.agent.organizationId);
-            if (results.length > 0) {
-                console.log(`[WhatsApp] Found ${results.length} relevant chunks`);
-                context = results.map(r => r.content).join('\n\n');
-            } else {
-                console.log('[WhatsApp] No relevant knowledge found');
-            }
-        } catch (error) {
-            console.error('[WhatsApp] Knowledge Base search failed:', error);
-            // Continue without context
-        }
-
-        // 4.6 Fetch Conversation History
-        let historyContext = '';
-        try {
-            console.log('[WhatsApp] Fetching conversation history...');
-            const history = await this.prisma.message.findMany({
-                where: {
-                    sessionId,
-                    contactId: contact.id,
-                },
-                orderBy: {
-                    createdAt: 'desc',
-                },
-                take: 10, // Last 10 messages
-            });
-
-            // Reverse to chronological order
-            const sortedHistory = history.reverse();
-
-            if (sortedHistory.length > 0) {
-                historyContext = sortedHistory.map(msg => {
-                    const role = msg.role === 'USER' ? 'User' : 'Assistant';
-                    return `${role}: ${msg.content}`;
-                }).join('\n');
-                console.log(`[WhatsApp] Found ${sortedHistory.length} history messages`);
-            }
-        } catch (error) {
-            console.error('[WhatsApp] Failed to fetch history:', error);
-        }
-
-        try {
-            // Append scheduling instruction
-            const schedulingInstruction = `
-IMPORTANT: You have the capability to schedule meetings, calls, visits, or sales, BUT you must NEVER bring this up unless the user explicitly requests it or clearly indicates a desire to meet/talk later.
-If the user DOES ask to schedule or says something like "call me tomorrow" or "can we meet?", then you should help them schedule it.
-When the scheduling is confirmed with a specific date and time, you MUST output a special block at the END of your response in the following JSON format:
-[SCHEDULE]
-{
-  "subject": "Meeting/Call/Visit/Sale Subject",
-  "date": "YYYY-MM-DD HH:mm",
-  "summary": "Brief summary of the agenda"
-}
-[/SCHEDULE]
-The date must be in the future. If the user didn't specify a date, ask for it. Do NOT output this block if the date is not confirmed.
-DO NOT ask the user if they want to schedule something unless they have already brought up the topic.
-`;
-            const historyPrompt = historyContext ? `\n\nConversation History:\n${historyContext}` : '';
-
-            const workflowInstructions = `
-REGRAS OBRIGATÓRIAS:
-1. Quando o cliente mencionar um produto, SEMPRE chame catalog_search primeiro
-2. Use SEMPRE o campo "id" (UUID) do catalog_search nas outras ferramentas
-3. NUNCA mencione IDs técnicos (UUIDs) ou códigos ao cliente
-4. NUNCA mencione: "Armazenamento", "categoria"
-5. Seja natural e direto: mostre nome e preço
-
-EXEMPLO CORRETO:
-Cliente: "Quero Samsung A14"
-Você: [chama catalog_search]
-Você: "Temos Samsung A14 a 1.000kz. Quantas unidades quer?"
-Cliente: "2, Calemba 2"
-Você: [chama create_order]
-Você: "Pedido criado! Total: 2.000kz. Entrega em Calemba 2."
-
-NUNCA FAÇA:
-❌ "O ID do produto é 71c884e1..."
-❌ "Armazenamento 124GB"
-❌ "categoria Smartphone"
-✅ "Temos Samsung A14 a 1.000kz. Quantas quer?"
-`;
-
-            const fullSystemPrompt = workflowInstructions + '\n' + session.agent.prompt + historyPrompt + schedulingInstruction;
-
-            // Get function definitions
-            const functions = this.agentToolsService.getFunctionDefinitions();
-
-            const aiResponse = await this.llmService.generateResponseWithFunctions(
-                provider,
-                fullSystemPrompt,
-                text,
-                functions,
-                context,
-            );
-
-            console.log('[WhatsApp] AI response type:', aiResponse.type);
-
-            let finalResponse = '';
-
-            // Handle function calls
-            if (aiResponse.type === 'function_call') {
-                const functionName = aiResponse.function;
-                const args = aiResponse.arguments;
-                console.log(`[WhatsApp] Function call: ${functionName}`, args);
-
-                let toolResult = null;
-
-                try {
-                    switch (functionName) {
-                        case 'catalog_search':
-                            toolResult = await this.agentToolsService.catalogSearch(
-                                session.agent.organizationId,
-                                args.query,
-                                args.category
-                            );
-                            break;
-                        case 'check_availability':
-                            toolResult = await this.agentToolsService.checkAvailability(
-                                args.productId,
-                                args.quantity
-                            );
-                            break;
-                        case 'create_order':
-                            toolResult = await this.agentToolsService.createOrder(
-                                session.agent.organizationId,
-                                contact.id,
-                                args.items,
-                                args.deliveryAddress
-                            );
-                            break;
-                        case 'get_order_status':
-                            toolResult = await this.agentToolsService.getOrderStatus(contact.id);
-                            break;
-                        case 'get_bank_accounts':
-                            toolResult = await this.agentToolsService.getBankAccounts(session.agent.organizationId);
-                            break;
-                        case 'schedule_follow_up':
-                            toolResult = await this.agentToolsService.scheduleFollowUp(
-                                session.agent.organizationId,
-                                contact.id,
-                                args.query
-                            );
-                            break;
-                        default:
-                            toolResult = { error: `Function ${functionName} not found` };
-                    }
-                } catch (error) {
-                    console.error(`[WhatsApp] Tool execution failed:`, error);
-                    toolResult = { error: error.message };
-                }
-
-                // Generate final response with tool result
-                const toolResultStr = JSON.stringify(toolResult);
-                const followUpPrompt = `The tool ${functionName} returned: ${toolResultStr}\n\nNow respond to the user in Portuguese explaining the result.`;
-
-                finalResponse = await this.llmService.generateResponse(
-                    provider,
-                    fullSystemPrompt,
-                    followUpPrompt,
-                    context,
-                );
-            } else {
-                // Text response
-                finalResponse = aiResponse.content || aiResponse;
-            }
-
-            console.log('[WhatsApp] Final response:', finalResponse.substring(0, 100) + '...');
-
-            // Check for [SCHEDULE] block
-            const scheduleRegex = /\[SCHEDULE\]([\s\S]*?)\[\/SCHEDULE\]/;
-            const match = finalResponse.match(scheduleRegex);
-
-            if (match) {
-                try {
-                    const scheduleJson = JSON.parse(match[1]);
-                    console.log('[WhatsApp] Detected schedule request:', scheduleJson);
-
-                    // Create Agenda
-                    await this.agendaService.create({
-                        subject: scheduleJson.subject,
-                        date: new Date(scheduleJson.date),
-                        summary: scheduleJson.summary,
-                        client: contact.name || whatsappNumber,
-                        organizationId: session.agent.organizationId,
-                        contactId: contact.id,
-                    });
-
-                    // Remove the block from the response sent to user
-                    finalResponse = finalResponse.replace(scheduleRegex, '').trim();
-                } catch (e) {
-                    console.error('[WhatsApp] Failed to parse schedule JSON:', e);
-                }
-            }
-
-            // 6. Send response via WhatsApp
-            if (sock) {
-                // Stop "typing..." status (optional, sending message usually clears it, but good practice)
-                await sock.sendPresenceUpdate('paused', remoteJid);
-
-                await sock.sendMessage(remoteJid, { text: finalResponse });
-                console.log('[WhatsApp] Response sent to WhatsApp');
-
-                // 7. Save AI response to DB
-                await this.prisma.message.create({
-                    data: {
-                        content: finalResponse,
-                        role: 'ASSISTANT',
-                        sessionId,
-                        contactId: contact.id,
-                    },
-                });
-                console.log('[WhatsApp] Outgoing message saved');
-            } else {
-                console.error('[WhatsApp] Socket not found for sessionId:', sessionId);
-            }
-        } catch (error) {
-            console.error('[WhatsApp] Error generating AI response:', error);
-            console.error('[WhatsApp] Error stack:', error.stack);
-
-            // Fallback response
-            if (sock) {
-                await sock.sendPresenceUpdate('paused', remoteJid);
-                await sock.sendMessage(remoteJid, {
-                    text: 'Desculpe, estou com dificuldades técnicas no momento. Tente novamente em breve.',
-                });
-            }
-        }
-
-        console.log('[WhatsApp] ========== FINISHED PROCESSING ==========');
     }
 
     async getSessionStatus(sessionId: string) {
@@ -626,10 +393,55 @@ NUNCA FAÇA:
                 where: { id: sessionId },
             });
 
-            console.log(`[WhatsApp] Session deleted successfully: ${sessionId}`);
         } catch (error) {
             console.error(`[WhatsApp] Error deleting session ${sessionId}:`, error);
             throw error;
+        }
+    }
+
+    async sendNotification(organizationId: string, phone: string, text: string) {
+        console.log(`[WhatsApp] Sending notification to ${phone} for Org: ${organizationId}`);
+
+        // Find a CONNECTED session for this organization
+        const session = await this.prisma.session.findFirst({
+            where: {
+                status: 'CONNECTED',
+                agent: {
+                    organizationId: organizationId
+                }
+            }
+        });
+
+        if (!session) {
+            console.warn(`[WhatsApp] No connected session found for Org ${organizationId}. Cannot send notification.`);
+            return false;
+        }
+
+        const sock = this.sessions.get(session.id);
+        if (!sock) {
+            console.error(`[WhatsApp] Socket not found in memory for session ${session.id}`);
+            return false;
+        }
+
+        try {
+            const remoteJid = phone.includes('@') ? phone : `${phone}@s.whatsapp.net`;
+            await sock.sendMessage(remoteJid, { text });
+
+            // Log the notification in message history
+            await this.prisma.message.create({
+                data: {
+                    content: text,
+                    role: 'ASSISTANT',
+                    sessionId: session.id,
+                    // We don't necessarily have a contactId here easily without more queries, 
+                    // but we can try to find it by phone if needed.
+                }
+            });
+
+            return true;
+        } catch (error) {
+            console.error(`[WhatsApp] Failed to send notification:`, error);
+            return false;
         }
     }
 }
