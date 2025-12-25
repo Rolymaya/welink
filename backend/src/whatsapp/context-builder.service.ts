@@ -30,7 +30,7 @@ export class ContextBuilderService {
         const recentMessages = await this.prisma.message.findMany({
             where: { contactId },
             orderBy: { createdAt: 'desc' },
-            take: 5,
+            take: 12,
             select: {
                 role: true,
                 content: true

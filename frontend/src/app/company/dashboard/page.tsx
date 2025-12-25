@@ -6,6 +6,8 @@ import { Bot, MessageSquare, Smartphone, Plus, ArrowUpRight, Users } from 'lucid
 import Link from 'next/link';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 
 interface DashboardStats {
     agents: {
@@ -67,21 +69,18 @@ export default function CompanyDashboardPage() {
     }
 
     return (
-        <div className="space-y-8">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-                    <p className="text-gray-500 mt-2">Visão geral da sua operação de IA.</p>
-                </div>
-                <div className="flex gap-3">
-                    <Link href="/company/agents/create">
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Novo Agente
-                        </Button>
-                    </Link>
-                </div>
-            </div>
+        <div className={cn("space-y-8", PAGE_ANIMATION)}>
+            <PageHeader
+                title="Dashboard"
+                description="Visão geral da sua operação de IA e estatísticas de atendimento"
+            >
+                <Link href="/company/agents/create">
+                    <Button size="lg" className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300">
+                        <Plus className="mr-2 h-5 w-5" />
+                        Novo Agente
+                    </Button>
+                </Link>
+            </PageHeader>
 
             {/* Stats Cards */}
             <div className="grid gap-6 md:grid-cols-4">

@@ -122,9 +122,15 @@ export class WhatsAppService implements OnModuleInit {
         sock.ev.on('messages.upsert', async (m) => {
             if (m.type === 'notify') {
                 for (const msg of m.messages) {
-                    if (!msg.key.fromMe) {
-                        console.log('replying to', msg.key.remoteJid);
+                    // Apenas processar mensagens privadas (não grupos ou canais)
+                    const remoteJid = msg.key.remoteJid;
+                    const isPrivateChat = remoteJid?.endsWith('@s.whatsapp.net');
+
+                    if (!msg.key.fromMe && isPrivateChat) {
+                        console.log('[WhatsApp] Processing private message from:', remoteJid);
                         this.handleIncomingMessage(sessionId, msg);
+                    } else if (!isPrivateChat && !msg.key.fromMe) {
+                        console.log('[WhatsApp] Ignoring non-private message from:', remoteJid);
                     }
                 }
             }

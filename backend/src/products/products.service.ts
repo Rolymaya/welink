@@ -122,7 +122,11 @@ export class ProductsService {
         }
 
         if (!product.stock || product.stock < quantity) {
-            return { available: false, reason: 'Insufficient stock' };
+            return {
+                available: false,
+                reason: 'Insufficient stock',
+                currentStock: product.stock || 0
+            };
         }
 
         return {

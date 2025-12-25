@@ -9,12 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { ArrowLeft, Lightbulb } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { useSubscription } from '@/hooks/useSubscription';
 import SubscriptionRequiredOverlay from '@/components/subscription-required-overlay';
 import LimitReachedOverlay from '@/components/limit-reached-overlay';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
     name: z.string().min(2, 'O nome deve ter pelo menos 2 caracteres'),
@@ -56,13 +58,6 @@ export default function CreateAgentPage() {
             setUsage(response.data);
 
             if (subscription) {
-                console.log('DEBUG AGENTS:', {
-                    subscription,
-                    package: subscription.package,
-                    maxAgents: subscription.package?.maxAgents,
-                    usage: response.data.agents
-                });
-
                 const limit = subscription.package?.maxAgents || 0;
                 if (response.data.agents >= limit) {
                     setShowLimitModal(true);
@@ -104,29 +99,21 @@ export default function CreateAgentPage() {
                 currentLimit={subscription?.package?.maxAgents || 0}
                 onClose={() => router.push('/company/agents')}
             />
-            <div className="max-w-3xl mx-auto space-y-6">
-                <div className="flex items-center space-x-4">
-                    <Button variant="ghost" size="sm" onClick={() => router.back()}>
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Voltar
-                    </Button>
-                </div>
+            <div className={cn("max-w-3xl mx-auto space-y-8", PAGE_ANIMATION)}>
+                <PageHeader
+                    title="Criar Novo Agente"
+                    description="Configure um assistente virtual para automatizar o atendimento"
+                    showBackButton
+                />
 
-                <div>
-                    <h1 className="text-3xl font-bold">Criar Novo Agente</h1>
-                    <p className="text-gray-500 mt-1">
-                        Configure um assistente virtual para automatizar o atendimento
-                    </p>
-                </div>
-
-                <Card className="border-blue-200 bg-blue-50">
+                <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/10 dark:border-blue-800 transition-all duration-300">
                     <CardHeader>
                         <div className="flex items-center space-x-2">
-                            <Lightbulb className="h-5 w-5 text-blue-600" />
-                            <CardTitle className="text-blue-900">Dicas para um bom prompt</CardTitle>
+                            <Lightbulb className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <CardTitle className="text-blue-900 dark:text-blue-100">Dicas para um bom prompt</CardTitle>
                         </div>
                     </CardHeader>
-                    <CardContent className="text-sm text-blue-800 space-y-2">
+                    <CardContent className="text-sm text-blue-800 dark:text-blue-300 space-y-2">
                         <p>• Defina claramente a personalidade e tom do agente (formal, amigável, técnico)</p>
                         <p>• Especifique o que o agente pode e não pode fazer</p>
                         <p>• Inclua exemplos de como responder a perguntas comuns</p>
@@ -134,7 +121,7 @@ export default function CreateAgentPage() {
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="shadow-lg border-t-4 border-t-primary transition-all duration-300">
                     <CardHeader>
                         <CardTitle>Informações do Agente</CardTitle>
                         <CardDescription>
@@ -154,6 +141,7 @@ export default function CreateAgentPage() {
                                                 <Input
                                                     placeholder="Ex: Assistente de Vendas"
                                                     {...field}
+                                                    className="transition-all focus:ring-2 focus:ring-primary/20"
                                                 />
                                             </FormControl>
                                             <FormDescription>
@@ -172,8 +160,8 @@ export default function CreateAgentPage() {
                                             <FormLabel>Prompt do Sistema</FormLabel>
                                             <FormControl>
                                                 <Textarea
-                                                    placeholder="Você é um assistente de vendas amigável e profissional. Ajude os clientes a encontrar produtos, responda suas dúvidas sobre preços e disponibilidade, e forneça informações sobre nossa política de devolução..."
-                                                    className="min-h-[200px] resize-none"
+                                                    placeholder="Você é um assistente de vendas amigável e profissional..."
+                                                    className="min-h-[200px] resize-none transition-all focus:ring-2 focus:ring-primary/20"
                                                     {...field}
                                                 />
                                             </FormControl>
@@ -185,7 +173,7 @@ export default function CreateAgentPage() {
                                     )}
                                 />
 
-                                <div className="flex justify-end space-x-4">
+                                <div className="flex justify-end space-x-4 pt-4 border-t">
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -194,7 +182,7 @@ export default function CreateAgentPage() {
                                     >
                                         Cancelar
                                     </Button>
-                                    <Button type="submit" disabled={loading}>
+                                    <Button type="submit" disabled={loading} className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-700 text-white shadow-lg shadow-primary/20 transition-all duration-300">
                                         {loading ? 'A criar...' : 'Criar Agente'}
                                     </Button>
                                 </div>

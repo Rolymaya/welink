@@ -7,6 +7,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { OpenAIIntegrationService } from '../llm/openai-integration.service';
 
 @ApiTags('super-admin')
 @ApiBearerAuth()
@@ -14,7 +15,10 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 @Roles(Role.SUPER_ADMIN)
 @Controller('super-admin')
 export class SuperAdminController {
-    constructor(@Inject(SuperAdminService) private readonly superAdminService: SuperAdminService) { }
+    constructor(
+        @Inject(SuperAdminService) private readonly superAdminService: SuperAdminService,
+        private readonly openaiIntegration: OpenAIIntegrationService,
+    ) { }
 
     @Post('providers')
     create(@Body() createDto: CreateLLMProviderDto) {
@@ -49,5 +53,10 @@ export class SuperAdminController {
     @Post('settings')
     updateSettings(@Body() settings: Record<string, string>) {
         return this.superAdminService.updateSettings(settings);
+    }
+
+    @Post('migrate/openai-sync')
+    async migrateOpenAI() {
+        return this.openaiIntegration.syncAllAgents();
     }
 }

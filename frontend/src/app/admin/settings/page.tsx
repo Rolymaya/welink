@@ -13,6 +13,8 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from '@/components/ui/accordion';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 
 export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
@@ -127,13 +129,11 @@ export default function SettingsPage() {
 
     return (
         <AdminLayout>
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl font-bold">Configurações do Sistema</h1>
-                    <p className="text-gray-500 mt-1">
-                        Gerencie as configurações globais da plataforma
-                    </p>
-                </div>
+            <div className={cn("space-y-8 p-2", PAGE_ANIMATION)}>
+                <PageHeader
+                    title="Configurações do Sistema"
+                    description="Gerencie as configurações globais da plataforma, SMTP e limites do Playground"
+                />
 
                 <div className="space-y-4">
                     <Accordion type="single" collapsible className="w-full space-y-4">

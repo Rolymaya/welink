@@ -15,7 +15,8 @@ export class QuestionHandler {
         knowledgeContext: any[], // Might be empty now
         agentPersonality: string,
         provider: any,
-        organizationId: string // Need orgId for search
+        organizationId: string, // Need orgId for search
+        history: string[] = []
     ): Promise<string> {
 
         // If no context provided (optimization), fetch it now
@@ -58,12 +59,17 @@ ${agentPersonality}
 CONHECIMENTO DISPONÍVEL:
 ${knowledgeText}
 
+HISTÓRICO RECENTE DA CONVERSA:
+${history.join('\n')}
+
 PERGUNTA DO CLIENTE:
 "${userInput}"
 
-Responda à pergunta usando o conhecimento disponível.
-Seja natural e útil.
-Se o conhecimento não responder completamente, diga o que sabe e ofereça ajuda adicional.
+INSTRUÇÕES:
+1. Responda à pergunta usando o conhecimento disponível.
+2. Seja natural e útil.
+3. Use o HISTÓRICO acima para entender o contexto. Se o cliente se referir a algo dito anteriormente (ex: "para um site" após listar serviços), responda com base nesse contexto.
+4. Se o conhecimento não responder completamente, diga o que sabe e ofereça ajuda adicional.
 `;
 
         console.log('[QuestionHandler] Generating response with Valid Knowledge...');

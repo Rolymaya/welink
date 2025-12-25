@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Users, Phone } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 
 interface Contact {
     id: string;
@@ -47,19 +49,16 @@ export default function ContactsPage() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold">Contactos</h1>
-                    <p className="text-gray-500 mt-1">
-                        Clientes que interagiram com os seus agentes
-                    </p>
-                </div>
-                <div className="flex items-center space-x-2 text-sm text-gray-500">
-                    <Users className="h-4 w-4" />
+        <div className={cn("space-y-8", PAGE_ANIMATION)}>
+            <PageHeader
+                title="Contactos"
+                description="Clientes que interagiram com os seus agentes"
+            >
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground bg-muted/50 px-4 py-2 rounded-full border border-border/50">
+                    <Users className="h-4 w-4 text-primary" />
                     <span>{contacts.length} contactos</span>
                 </div>
-            </div>
+            </PageHeader>
 
             {contacts.length === 0 ? (
                 <Card>

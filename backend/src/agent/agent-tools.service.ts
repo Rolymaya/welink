@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { ProductsService } from '../products/products.service';
 import { OrdersService } from '../orders/orders.service';
 import { AffiliatesService } from '../affiliates/affiliates.service';
@@ -8,6 +8,7 @@ import { AgendaService } from '../agenda/agenda.service';
 export class AgentToolsService {
     constructor(
         private productsService: ProductsService,
+        @Inject(forwardRef(() => OrdersService))
         private ordersService: OrdersService,
         private affiliatesService: AffiliatesService, // Inject AffiliatesService
         private agendaService: AgendaService, // Inject
@@ -44,7 +45,7 @@ export class AgentToolsService {
                 description: desc,
                 price: formattedPrice, // Send pre-formatted price
                 category: product.category,
-                // REMOVED: stock - AI should use check_availability for stock info, not cache it
+                stock: product.isPhysical ? (product.stock ?? 0) : 'Digital',
                 isPhysical: product.isPhysical,
             };
         });
@@ -90,6 +91,14 @@ export class AgentToolsService {
                 message: error.message || 'Erro ao criar pedido',
             };
         }
+    }
+
+    /**
+     * Tool: get_contact_orders
+     * Gets raw order data for a contact
+     */
+    async getContactOrders(contactId: string) {
+        return await this.ordersService.getContactOrders(contactId);
     }
 
     /**

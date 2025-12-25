@@ -14,6 +14,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
 import { KBStatus } from '@prisma/client';
 import { LLMProviderService } from '../super-admin/llm-provider.service';
+import { OpenAIIntegrationService } from '../llm/openai-integration.service';
 
 @Injectable()
 export class IngestionService {
@@ -25,6 +26,8 @@ export class IngestionService {
         @Inject(PrismaService) private prisma: PrismaService,
         @Inject(forwardRef(() => LLMProviderService))
         private llmProviderService: LLMProviderService,
+        @Inject(OpenAIIntegrationService)
+        private openaiIntegration: OpenAIIntegrationService,
     ) { }
 
     private async getEmbeddings() {
@@ -118,6 +121,16 @@ export class IngestionService {
                 this.logger.log(`Inserting ${vectors.length} vectors into Weaviate...`);
                 await this.vectorStore.addVectors(vectors);
                 this.logger.log('Vectors inserted successfully');
+            }
+
+            // 4. Sync with OpenAI Vector Store
+            try {
+                this.logger.log(`Syncing KB ${kbId} with OpenAI Vector Store...`);
+                await this.openaiIntegration.uploadFileToVectorStore(orgId, filePath);
+                this.logger.log('Sync with OpenAI successful');
+            } catch (openaiError) {
+                this.logger.error(`Failed to sync with OpenAI Vector Store: ${openaiError.message}`);
+                // We don't fail the whole process if OpenAI sync fails, but we log it
             }
 
             // Cleanup file

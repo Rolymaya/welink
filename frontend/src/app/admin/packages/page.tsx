@@ -7,6 +7,8 @@ import { Plus, Edit, Trash2, Check, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 import {
     Table,
     TableBody,
@@ -97,19 +99,18 @@ export default function PackagesPage() {
 
     return (
         <AdminLayout>
-            <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Packages</h1>
-                        <p className="text-muted-foreground">Manage subscription plans and limits.</p>
-                    </div>
+            <div className={cn("space-y-8 p-2", PAGE_ANIMATION)}>
+                <PageHeader
+                    title="Planos e Pacotes"
+                    description="Gerencie os planos de subscrição, preços e limites de recursos para seus clientes"
+                >
                     <Link href="/admin/packages/create">
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Create Package
+                        <Button size="lg" className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300">
+                            <Plus className="mr-2 h-5 w-5" />
+                            Novo Pacote
                         </Button>
                     </Link>
-                </div>
+                </PageHeader>
 
                 <div className="rounded-md border shadow-sm bg-white dark:bg-gray-900 overflow-hidden">
                     <Table>

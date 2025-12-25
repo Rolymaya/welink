@@ -11,6 +11,8 @@ import { Check, X, ExternalLink } from 'lucide-react';
 import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 import {
     Table,
     TableBody,
@@ -142,11 +144,11 @@ export default function SubscriptionsPage() {
 
     return (
         <AdminLayout>
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Subscriptions</h1>
-                    <p className="text-muted-foreground">Manage organization subscriptions and payments.</p>
-                </div>
+            <div className={cn("space-y-8 p-2", PAGE_ANIMATION)}>
+                <PageHeader
+                    title="Subscrições e Pagamentos"
+                    description="Gerencie as assinaturas das empresas e valide os comprovativos de pagamento"
+                />
 
                 {/* Filters */}
                 <Card>

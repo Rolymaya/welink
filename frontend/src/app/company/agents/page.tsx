@@ -7,6 +7,8 @@ import { Plus, Edit, Trash2, Bot, Play, Pause } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 
 interface Agent {
     id: string;
@@ -76,19 +78,16 @@ export default function AgentsPage() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold">Agentes de IA</h1>
-                    <p className="text-gray-500 mt-1">
-                        Gerencie os assistentes virtuais da sua empresa
-                    </p>
-                </div>
-                <Button onClick={() => router.push('/company/agents/create')}>
-                    <Plus className="mr-2 h-4 w-4" />
+        <div className={cn("space-y-8", PAGE_ANIMATION)}>
+            <PageHeader
+                title="Agentes de IA"
+                description="Gerencie os assistentes virtuais da sua empresa e automatize o atendimento"
+            >
+                <Button onClick={() => router.push('/company/agents/create')} size="lg" className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300">
+                    <Plus className="mr-2 h-5 w-5" />
                     Criar Agente
                 </Button>
-            </div>
+            </PageHeader>
 
             {agents.length === 0 ? (
                 <Card>

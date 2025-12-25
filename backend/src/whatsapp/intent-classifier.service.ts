@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { LLMService } from '../llm/llm.service';
 import { ConversationContext } from './context-builder.service';
 
-export type Intent = 'ORDER' | 'BROWSE_CATALOG' | 'SCHEDULE' | 'QUESTION' | 'CHAT';
+export type Intent = 'ORDER' | 'BROWSE_CATALOG' | 'SCHEDULE' | 'QUESTION' | 'CHAT' | 'HISTORY';
 
 export interface IntentDecision {
     intent: Intent;
@@ -28,8 +28,6 @@ export class IntentClassifierService {
         const prompt = `
 ${agentPersonality}
 
-
-
 ESTADO DA CONVERSA:
 ${JSON.stringify(context.state, null, 2)}
 
@@ -44,36 +42,35 @@ MENSAGEM DO CLIENTE:
 FUNÇÕES DO SISTEMA DISPONÍVEIS (Sua missão é decidir qual executar):
 
 1. BROWSE_CATALOG
-   - O que faz: Buscar produtos disponíveis (preço, stock).
-   - Quando usar: Sempre que houver interesse explícito ou implícito em produtos, marcas, modelos, disponibilidade ou catálogo — mesmo sem pergunta direta.
+   - O que faz: Listar produtos físicos ou buscar informações de vendas de itens tangíveis (preços, stock de produtos).
+   - Quando usar: Quando o cliente pergunta "o que vocês têm?", "quais os preços?", "tem o produto X?".
+   - **IMPORTANTE**: Use apenas para PRODUTOS (coisas que se vendem em unidades). Se for sobre serviços da empresa, utilize QUESTION.
 
 2. ORDER
-   - O que faz: Iniciar processo de venda (criar pedido).
-   - Quando usar: Quando o cliente quiser comprar ou fechar negócio.
+   - O que faz: Iniciar ou prosseguir com um pedido de compra.
+   - Quando usar: Quando o cliente quiser fechar uma compra ou especificar quantidades.
 
 3. QUESTION
-   - O que faz: Buscar respostas da base de conhecimento (PDFs, Docs da Empresa).
-   - Quando usar: Quando for necessário responder com INFORMAÇÃO CONCRETA, consultar bases de dados de textos, ou perguntas sobre REGRAS, PROMOÇÕES, CAMPANHAS e SERVIÇOS.
+   - O que faz: Buscar respostas sobre SERVIÇOS, REGRAS, PROMOÇÕES ou informações institucionais.
+   - Quando usar: Quando o cliente pergunta "quais os vossos serviços?", "como funciona o site?", "quem são vocês?", ou segue uma conversa sobre serviços mencionados anteriormente.
 
-4. SCHEDULE
-   - O que faz: Iniciar agendamento.
-   - Quando usar: Quando o cliente quiser marcar reunião ou compromisso.
+4. HISTORY
+   - O que faz: Consultar o passado do próprio cliente.
+   - Quando usar: Quando o cliente pergunta "o que pedi ontem?", "qual o estado do meu pedido?", "o que eu já comprei?".
 
-5. CHAT
-   - O que faz: Apenas responder.
-   - Quando usar: Somente para saudações ou mensagens sem ação técnica.
+5. SCHEDULE
+   - O que faz: Marcar reuniões.
 
-INSTRUCÃO: Interprete a mensagem do cliente e decida qual destas funções atende melhor a necessidade dele.
+6. CHAT
+   - O que faz: Conversa casual, saudações.
 
-Responda APENAS com JSON válido:
+INSTRUCÃO: Interprete a mensagem e decida o intent. Se o cliente falar "Para um site" logo após perguntar por "serviços", ele provavelmente está a perguntar sobre o SERVIÇO de site (intent QUESTION).
+
+Responda APENAS com JSON:
 {
-  "intent": "ORDER | BROWSE_CATALOG | SCHEDULE | QUESTION | CHAT",
-  "reasoning": "breve explicação da sua análise",
-  "extractedInfo": {
-    "product": "nome do produto mencionado ou null",
-    "quantity": número ou null,
-    "address": "endereço mencionado ou null"
-  }
+  "intent": "ORDER | BROWSE_CATALOG | SCHEDULE | QUESTION | CHAT | HISTORY",
+  "reasoning": "...",
+  "extractedInfo": { ... }
 }
 `;
 

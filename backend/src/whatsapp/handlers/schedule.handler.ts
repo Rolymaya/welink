@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { AgentToolsService } from '../../agent/agent-tools.service';
 import { LLMService } from '../../llm/llm.service';
 
 @Injectable()
 export class ScheduleHandler {
     constructor(
+        @Inject(forwardRef(() => AgentToolsService))
         private agentTools: AgentToolsService,
         private llmService: LLMService
     ) { }

@@ -89,6 +89,9 @@ model Organization {
   orders        Order[]
   bankAccounts  BankAccount[]
 
+  // OpenAI Integration
+  openaiVectorStoreId String? // ID of the organization's vector store for knowledge base
+
   // Affiliate Relations
   affiliateProfile AffiliateProfile?
   referral         AffiliateReferral? @relation("ReferredOrganization") // If this org was referred by someone
@@ -254,6 +257,10 @@ model Agent {
   organizationId String
   sessions      Session[]
   isActive      Boolean      @default(true)
+  
+  // OpenAI Integration
+  openaiAssistantId String?   // ID of the OpenAI Assistant (DNA/Personality)
+  
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
@@ -280,6 +287,10 @@ model Contact {
   agendas       Agenda[]
   orders        Order[]
   tags          String   @default("")
+  
+  // OpenAI Integration
+  openaiConversationId String? // ID of the OpenAI Thread (Memory)
+
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 

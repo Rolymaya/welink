@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LogoUpload } from '@/components/logo-upload';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { getReferralCode } from '@/lib/referral-cookies';
 
 const formSchema = z.object({
     name: z.string().min(2, 'O nome deve ter pelo menos 2 caracteres'),
@@ -55,6 +56,13 @@ export default function CompanyOnboardingPage() {
             formData.append('sector', values.sector);
             if (values.description) formData.append('description', values.description);
             if (logoFile) formData.append('logo', logoFile);
+
+            // Add referral code from cookie if exists
+            const referralCode = getReferralCode();
+            if (referralCode) {
+                formData.append('referralCode', referralCode);
+                console.log('✅ Sending referral code:', referralCode);
+            }
 
             const response = await api.post('/organization/register', formData, {
                 headers: {

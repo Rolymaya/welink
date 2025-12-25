@@ -7,6 +7,8 @@ import { Plus, Trash2, FlaskConical, MessageCircle, Sparkles, Zap, Crown } from 
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import PlaygroundQRDisplay from '@/components/playground-qr-display';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 
 export default function PlaygroundAgentsPage() {
     const router = useRouter();
@@ -93,25 +95,20 @@ export default function PlaygroundAgentsPage() {
     }
 
     return (
-        <div className="space-y-8">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold flex items-center gap-2">
-                        <FlaskConical className="h-8 w-8 text-primary" />
-                        Playground - Teste Grátis
-                    </h1>
-                    <p className="text-gray-500 mt-1">
-                        Crie e teste agentes gratuitamente via WhatsApp antes de assinar
-                    </p>
-                </div>
+        <div className={cn("space-y-8", PAGE_ANIMATION)}>
+            <PageHeader
+                title="Playground - Teste Grátis"
+                description="Crie e teste agentes gratuitamente via WhatsApp antes de assinar"
+            >
                 <Button
                     onClick={() => router.push('/company/playground/agents/new')}
                     disabled={limits && !limits.agents.canCreate}
+                    className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300"
                 >
                     <Plus className="mr-2 h-4 w-4" />
                     Novo Agente de Teste
                 </Button>
-            </div>
+            </PageHeader>
 
             {limits && (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -268,7 +265,7 @@ export default function PlaygroundAgentsPage() {
                                         <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-4 border border-gray-200/50">
                                             <div className="flex items-center gap-2 mb-3">
                                                 <div className="h-1 w-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full"></div>
-                                                <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Prompt do Sistema</p>
+                                                <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Prompt do Systema</p>
                                             </div>
                                             <p className="text-sm text-gray-700 whitespace-pre-wrap max-h-32 overflow-y-auto leading-relaxed">
                                                 {agent.prompt}

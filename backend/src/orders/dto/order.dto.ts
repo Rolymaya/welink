@@ -1,4 +1,4 @@
-import { IsString, IsArray, IsNumber, ValidateNested, Min } from 'class-validator';
+import { IsString, IsArray, IsNumber, ValidateNested, Min, IsOptional, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class OrderItemDto {
@@ -27,6 +27,7 @@ export class UpdateOrderStatusDto {
     @IsString()
     status: 'PENDING' | 'AWAITING_PAYMENT' | 'PROCESSING' | 'SHIPPED' | 'COMPLETED' | 'REJECTED';
 
+    @IsOptional()
     @IsString()
     rejectionReason?: string;
 }

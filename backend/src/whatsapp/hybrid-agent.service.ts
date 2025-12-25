@@ -1,166 +1,113 @@
-import { Injectable } from '@nestjs/common';
-import { OrderStateManager } from './order-state.manager';
-import { ContextBuilderService } from './context-builder.service';
-import { IntentClassifierService } from './intent-classifier.service';
-import { OrderHandler } from './handlers/order.handler';
-import { QuestionHandler } from './handlers/question.handler';
-import { ScheduleHandler } from './handlers/schedule.handler';
-import { ChatHandler } from './handlers/chat.handler';
+import { Injectable, Inject, forwardRef, Logger } from '@nestjs/common';
 import { VectorStoreService } from '../knowledge/vector-store.service';
 import { LLMProviderService } from '../super-admin/llm-provider.service';
 import { AgentToolsService } from '../agent/agent-tools.service';
 import { IngestionService } from '../knowledge/ingestion.service';
+import { OpenAIIntegrationService } from '../llm/openai-integration.service';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class HybridAgentService {
+    private readonly logger = new Logger(HybridAgentService.name);
+
     constructor(
-        private stateManager: OrderStateManager,
-        private contextBuilder: ContextBuilderService,
-        private intentClassifier: IntentClassifierService,
-        private orderHandler: OrderHandler,
-        private questionHandler: QuestionHandler,
-        private scheduleHandler: ScheduleHandler,
-        private chatHandler: ChatHandler,
+        @Inject(forwardRef(() => AgentToolsService))
+        private agentTools: AgentToolsService,
+        private ingestionService: IngestionService,
         private vectorStore: VectorStoreService,
         private llmProviderService: LLMProviderService,
-
-        private agentTools: AgentToolsService,
-        private ingestionService: IngestionService
+        private openaiIntegration: OpenAIIntegrationService,
     ) { }
 
     async processMessage(
         userInput: string,
         contactId: string,
         organizationId: string,
-        agentPersonality: string
+        agentId: string,
     ): Promise<string> {
+        this.logger.log(`[HybridAgent] Processing message with OpenAI Next-Gen for contact: ${contactId}`);
 
-        console.log('[HybridAgent] Processing message for contact:', contactId);
+        // 1. Obter as definições de ferramentas
+        const tools = this.agentTools.getFunctionDefinitions().map(f => ({
+            type: 'function',
+            function: f
+        }));
 
-        // Get LLM provider
-        const provider = await this.llmProviderService.getActiveProvider();
-        if (!provider) {
-            throw new Error('No active LLM provider');
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // STEP 1: BUILD CONTEXT
-        // ═══════════════════════════════════════════════════════
-
-        const currentState = this.stateManager.getState(contactId);
-        const context = await this.contextBuilder.buildContext(
-            userInput,
+        // 2. Iniciar a execução na OpenAI
+        let { run, threadId } = await this.openaiIntegration.generateResponse(
             contactId,
-            organizationId,
-            currentState
-        );
-
-        console.log('[HybridAgent] Context built:', {
-            hasState: !!context.state,
-            recentHistoryCount: context.recentHistory.length,
-            hasRelevantHistory: !!context.relevantHistory,
-            knowledgeCount: context.knowledgeContext.length
-        });
-
-        // ═══════════════════════════════════════════════════════
-        // STEP 2: CLASSIFY INTENT (ReAct)
-        // ═══════════════════════════════════════════════════════
-
-        const decision = await this.intentClassifier.classifyIntent(
+            agentId,
             userInput,
-            context,
-            agentPersonality,
-            provider
+            tools as any
         );
 
-        console.log('[HybridAgent] Intent classified:', decision.intent);
-        console.log('[HybridAgent] Reasoning:', decision.reasoning);
+        // 3. Loop de processamento de Tool Calls (se necessário)
+        const openai: any = await (this.openaiIntegration as any).getClient();
 
-        // ═══════════════════════════════════════════════════════
-        // STEP 3: EXECUTE HANDLER (Conditional Chains)
-        // ═══════════════════════════════════════════════════════
+        while (run.status === 'requires_action') {
+            const toolCalls = run.required_action?.submit_tool_outputs.tool_calls || [];
+            const toolOutputs = [];
 
-        let response: string;
+            for (const toolCall of toolCalls) {
+                const functionName = toolCall.function.name;
+                const args = JSON.parse(toolCall.function.arguments);
 
-        switch (decision.intent) {
-            case 'BROWSE_CATALOG':
-                // List available products
-                const products = await this.agentTools.catalogSearch(
-                    organizationId,
-                    '', // empty query = all products
-                    undefined
-                );
+                this.logger.log(`[HybridAgent] OpenAI solicitou ferramenta: ${functionName}`);
 
-                if (products && products.length > 0) {
-                    const productList = products.map(p => `${p.name} - ${p.price}`).join('\n');
-                    response = `Temos os seguintes produtos:\n${productList}\n\nQual te interessa?`;
-                } else {
-                    response = 'Ainda não temos produtos disponíveis.';
+                let output: any;
+
+                try {
+                    switch (functionName) {
+                        case 'catalog_search':
+                            output = await this.agentTools.catalogSearch(organizationId, args.query, args.category);
+                            break;
+                        case 'check_availability':
+                            output = await this.agentTools.checkAvailability(args.productId, args.quantity);
+                            break;
+                        case 'create_order':
+                            output = await this.agentTools.createOrder(organizationId, contactId, args.items, args.deliveryAddress);
+                            break;
+                        case 'get_order_status':
+                            output = await this.agentTools.getOrderStatus(contactId);
+                            break;
+                        case 'get_bank_accounts':
+                            output = await this.agentTools.getBankAccounts(organizationId);
+                            break;
+                        case 'schedule_follow_up':
+                            output = await this.agentTools.scheduleFollowUp(organizationId, contactId, args.query);
+                            break;
+                        default:
+                            output = { error: 'Ferramenta não encontrada' };
+                    }
+                } catch (e) {
+                    this.logger.error(`Erro ao executar ferramenta ${functionName}:`, e.message);
+                    output = { error: e.message };
                 }
-                break;
 
-            case 'ORDER':
-                response = await this.orderHandler.handle(
-                    contactId,
-                    organizationId,
-                    decision.extractedInfo,
-                    agentPersonality,
-                    provider
-                );
-                break;
+                toolOutputs.push({
+                    tool_call_id: toolCall.id,
+                    output: JSON.stringify(output)
+                });
+            }
 
-            case 'SCHEDULE':
-                response = await this.scheduleHandler.handle(
-                    userInput,
-                    contactId,
-                    organizationId,
-                    agentPersonality,
-                    provider,
-                    context.recentHistory
-                );
-                break;
-
-            case 'QUESTION':
-                response = await this.questionHandler.handle(
-                    userInput,
-                    context.knowledgeContext,
-                    agentPersonality,
-                    provider,
-                    organizationId
-                );
-                break;
-
-            case 'CHAT':
-                response = await this.chatHandler.handle(
-                    userInput,
-                    agentPersonality,
-                    provider
-                );
-                break;
-
-            default:
-                response = await this.chatHandler.handle(
-                    userInput,
-                    agentPersonality,
-                    provider
-                );
+            // Submeter os resultados de volta à OpenAI
+            run = await openai.beta.threads.runs.submitToolOutputsAndPoll(threadId, run.id, {
+                tool_outputs: toolOutputs
+            });
         }
 
-        // ═══════════════════════════════════════════════════════
-        // STEP 4: SAVE TO VECTOR STORE (with contactId!)
-        // ═══════════════════════════════════════════════════════
+        // 4. Obter a resposta final
+        if (run.status === 'completed') {
+            const finalResponse = await this.openaiIntegration.getRunResult(threadId, run.id);
 
-        await this.saveToVectorStore(
-            userInput,
-            response,
-            contactId,
-            organizationId
-        );
+            // Salvar no Vector Store local (Audit)
+            await this.saveToVectorStore(userInput, finalResponse, contactId, organizationId);
 
-        console.log('[HybridAgent] Response generated and saved');
-
-        return response;
+            return finalResponse;
+        } else {
+            this.logger.error(`Run falhou com status: ${run.status}`);
+            return 'Desculpe, tive um problema ao processar a sua solicitação. Por favor, tente novamente.';
+        }
     }
 
     private async saveToVectorStore(
@@ -171,30 +118,23 @@ export class HybridAgentService {
     ): Promise<void> {
         try {
             const content = `User: ${userInput}\nAssistant: ${response}`;
-
-            // Generate embedding using ingestion service
             const embedding = await this.ingestionService.embedQuery(content);
             const vectorId = uuidv4();
 
-            // Store in Weaviate
             await this.vectorStore.addVectors([{
                 id: vectorId,
                 vector: embedding,
                 properties: {
                     content,
-                    contactId,        // ← CRITICAL: Privacy
+                    contactId,
                     organizationId,
-                    timestamp: new Date().toISOString(), // Weaviate likes ISO strings
+                    timestamp: new Date().toISOString(),
                     type: 'chat_message',
-                    kbId: 'chat-history' // Mark as chat history to distinguish from KB
+                    kbId: 'chat-history'
                 }
             }]);
-
-            console.log('[HybridAgent] Chat history saved to vector store');
-
         } catch (error) {
-            console.error('[HybridAgent] Failed to save to vector store:', error);
-            // Don't throw - saving to vector store is not critical for response
+            this.logger.error('[HybridAgent] Failed to save to vector store:', error);
         }
     }
 }

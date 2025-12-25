@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LayoutDashboard, Settings, Users, Bot, MessageSquare, Shield, LogOut, Package, CreditCard, Landmark } from 'lucide-react';
+import { LayoutDashboard, Settings, Users, Bot, MessageSquare, Shield, LogOut, Package, CreditCard, Landmark, DollarSign } from 'lucide-react';
 import { Button } from './ui/button';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -20,7 +20,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <h1 className="text-2xl font-bold text-white">SaaS AI</h1>
                     <p className="text-blue-100 text-sm mt-1">Admin Panel</p>
                 </div>
-                <nav className="mt-6 px-4 space-y-2 flex-1">
+                <nav className="mt-6 px-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar">
                     <Link href="/admin/dashboard" className="flex items-center px-4 py-2 text-white hover:bg-white hover:text-blue-600 rounded-md transition-all">
                         <LayoutDashboard className="w-5 h-5 mr-3" />
                         Dashboard
@@ -40,6 +40,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <Link href="/admin/bank-accounts" className="flex items-center px-4 py-2 text-white hover:bg-white hover:text-blue-600 rounded-md transition-all">
                         <Landmark className="w-5 h-5 mr-3" />
                         Contas Bancárias
+                    </Link>
+                    <Link href="/admin/affiliates" className="flex items-center px-4 py-2 text-white hover:bg-white hover:text-blue-600 rounded-md transition-all">
+                        <DollarSign className="w-5 h-5 mr-3" />
+                        Gestão de Afiliados
                     </Link>
                     <Link href="/admin/llms" className="flex items-center px-4 py-2 text-white hover:bg-white hover:text-blue-600 rounded-md transition-all">
                         <Bot className="w-5 h-5 mr-3" />

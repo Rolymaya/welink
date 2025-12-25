@@ -9,6 +9,8 @@ import api from '@/lib/api';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 
 interface KnowledgeBase {
     id: string;
@@ -92,19 +94,18 @@ export default function KnowledgeBasePage() {
     };
 
     return (
-        <div className="space-y-8">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Base de Conhecimento</h1>
-                    <p className="text-gray-500 mt-2">Gerencie os documentos e links que seus agentes usarão.</p>
-                </div>
+        <div className={cn("space-y-8", PAGE_ANIMATION)}>
+            <PageHeader
+                title="Base de Conhecimento"
+                description="Gerencie os documentos e links que seus agentes usarão para responder seus clientes"
+            >
                 <Link href="/company/knowledge/new">
-                    <Button>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Adicionar Novo
+                    <Button size="lg" className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300">
+                        <Plus className="mr-2 h-5 w-5" />
+                        Adicionar Documento
                     </Button>
                 </Link>
-            </div>
+            </PageHeader>
 
             {loading ? (
                 <div className="flex justify-center p-8">

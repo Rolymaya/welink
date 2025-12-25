@@ -1,11 +1,20 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ProductsModule } from '../products/products.module';
+import { WhatsAppModule } from '../whatsapp/whatsapp.module';
+import { BankAccountsModule } from '../bank-accounts/bank-accounts.module';
+import { AffiliatesModule } from '../affiliates/affiliates.module';
 
 @Module({
-    imports: [PrismaModule, ProductsModule],
+    imports: [
+        PrismaModule,
+        ProductsModule,
+        BankAccountsModule,
+        AffiliatesModule,
+        forwardRef(() => WhatsAppModule)
+    ],
     controllers: [OrdersController],
     providers: [OrdersService],
     exports: [OrdersService],

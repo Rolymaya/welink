@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { Plus, Edit, Trash2, Power, PowerOff } from 'lucide-react';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 
 interface BankAccount {
     id: string;
@@ -121,19 +123,16 @@ export default function BankAccountsPage() {
 
     return (
         <AdminLayout>
-            <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold">Contas Bancárias</h1>
-                        <p className="text-gray-500 mt-1">
-                            Gerencie as contas bancárias para pagamentos de subscrições
-                        </p>
-                    </div>
-                    <Button onClick={openCreateDialog} className="gap-2">
+            <div className={cn("space-y-8 p-2", PAGE_ANIMATION)}>
+                <PageHeader
+                    title="Contas Bancárias"
+                    description="Gerencie as contas bancárias para pagamentos de subscrições"
+                >
+                    <Button onClick={openCreateDialog} className="gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300">
                         <Plus className="h-4 w-4" />
                         Nova Conta
                     </Button>
-                </div>
+                </PageHeader>
 
                 <div className="grid gap-4">
                     {accounts.length === 0 ? (
@@ -148,7 +147,7 @@ export default function BankAccountsPage() {
                         </Card>
                     ) : (
                         accounts.map((account) => (
-                            <Card key={account.id} className="relative">
+                            <Card key={account.id} className="relative hover:shadow-md transition-shadow duration-200">
                                 <CardHeader>
                                     <div className="flex justify-between items-start">
                                         <div>
@@ -192,14 +191,14 @@ export default function BankAccountsPage() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="grid gap-2 text-sm">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between border-b border-border/50 pb-2">
                                             <span className="text-gray-500">IBAN:</span>
-                                            <span className="font-mono">{account.iban}</span>
+                                            <span className="font-mono font-medium">{account.iban}</span>
                                         </div>
                                         {account.swift && (
-                                            <div className="flex justify-between">
+                                            <div className="flex justify-between pt-1">
                                                 <span className="text-gray-500">SWIFT/BIC:</span>
-                                                <span className="font-mono">{account.swift}</span>
+                                                <span className="font-mono font-medium">{account.swift}</span>
                                             </div>
                                         )}
                                     </div>

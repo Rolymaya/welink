@@ -9,14 +9,7 @@ import { LLMModule } from '../llm/llm.module';
 import { AgendaModule } from '../agenda/agenda.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { ProductsModule } from '../products/products.module';
-import { OrderStateManager } from './order-state.manager';
-import { ContextBuilderService } from './context-builder.service';
-import { IntentClassifierService } from './intent-classifier.service';
 import { HybridAgentService } from './hybrid-agent.service';
-import { OrderHandler } from './handlers/order.handler';
-import { QuestionHandler } from './handlers/question.handler';
-import { ScheduleHandler } from './handlers/schedule.handler';
-import { ChatHandler } from './handlers/chat.handler';
 
 @Module({
     imports: [
@@ -32,16 +25,8 @@ import { ChatHandler } from './handlers/chat.handler';
     controllers: [WhatsAppController],
     providers: [
         WhatsAppService,
-        // Hybrid Agent Architecture
-        OrderStateManager,
-        ContextBuilderService,
-        IntentClassifierService,
+        // Hybrid Agent Architecture (OpenAI Next-Gen)
         HybridAgentService,
-        // Handlers
-        OrderHandler,
-        QuestionHandler,
-        ScheduleHandler,
-        ChatHandler,
     ],
     exports: [WhatsAppService],
 })

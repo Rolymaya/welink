@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 
 interface Organization {
     id: string;
@@ -66,15 +68,11 @@ export default function TenantsPage() {
 
     return (
         <AdminLayout>
-            <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Empresas (Tenants)</h1>
-                        <p className="text-gray-500 dark:text-gray-400 mt-1">
-                            Gerir todas as empresas registadas na plataforma
-                        </p>
-                    </div>
-                </div>
+            <div className={cn("space-y-8 p-2", PAGE_ANIMATION)}>
+                <PageHeader
+                    title="Empresas (Tenants)"
+                    description="Gerencie todas as empresas registadas na plataforma e acompanhe o crescimento do SaaS"
+                />
 
                 <Card>
                     <CardHeader>

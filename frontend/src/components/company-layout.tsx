@@ -15,7 +15,10 @@ import {
     Users,
     Calendar,
     CreditCard,
-    FlaskConical
+    FlaskConical,
+    DollarSign,
+    Package,
+    ShoppingCart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -31,11 +34,14 @@ const MENU_ITEMS = [
     { href: '/company/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/company/agents', label: 'Agentes', icon: Bot },
     { href: '/company/whatsapp', label: 'WhatsApp', icon: Smartphone },
+    { href: '/company/products', label: 'Produtos', icon: Package },
+    { href: '/company/orders', label: 'Encomendas', icon: ShoppingCart },
     { href: '/company/schedules', label: 'Agendamentos', icon: Calendar },
     { href: '/company/contacts', label: 'Contactos', icon: Users },
     { href: '/company/knowledge', label: 'Conhecimento', icon: Database },
     { href: '/company/playground/agents', label: 'Grátis', icon: FlaskConical },
     { href: '/company/billing', label: 'Planos', icon: CreditCard },
+    { href: '/company/affiliates', label: 'Afiliados', icon: DollarSign },
     { href: '/company/settings', label: 'Configurações', icon: Settings },
 ];
 

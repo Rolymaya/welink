@@ -8,6 +8,8 @@ import { ProfilePhotoUpload } from '@/components/profile-photo-upload';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { Save, User, Lock, Mail } from 'lucide-react';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 
 export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
@@ -78,13 +80,13 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="space-y-6 max-w-2xl mx-auto">
-            <div>
-                <h2 className="text-2xl font-bold tracking-tight">Meu Perfil</h2>
-                <p className="text-muted-foreground">Gerencie suas informações pessoais e segurança.</p>
-            </div>
+        <div className={cn("space-y-8 max-w-2xl mx-auto", PAGE_ANIMATION)}>
+            <PageHeader
+                title="Meu Perfil"
+                description="Gerencie suas informações pessoais e segurança"
+            />
 
-            <Card className="relative overflow-hidden border-t-4 border-t-purple-500">
+            <Card className="relative overflow-hidden border-t-4 border-t-primary shadow-lg transition-all duration-300">
                 <CardHeader>
                     <CardTitle>Informações Pessoais</CardTitle>
                     <CardDescription>Atualize sua foto e dados de identificação</CardDescription>
@@ -104,7 +106,7 @@ export default function ProfilePage() {
                             <Label htmlFor="email">Email</Label>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                                <Input id="email" value={email} disabled className="pl-9 bg-gray-50" />
+                                <Input id="email" value={email} disabled className="pl-9 bg-muted/30" />
                             </div>
                             <p className="text-xs text-muted-foreground">O email não pode ser alterado.</p>
                         </div>
@@ -118,7 +120,7 @@ export default function ProfilePage() {
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     placeholder="Seu nome"
-                                    className="pl-9"
+                                    className="pl-9 transition-all focus:ring-2 focus:ring-primary/20"
                                 />
                             </div>
                         </div>
@@ -126,7 +128,7 @@ export default function ProfilePage() {
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card className="shadow-lg transition-all duration-300">
                 <CardHeader>
                     <CardTitle>Segurança</CardTitle>
                     <CardDescription>Alterar sua senha de acesso</CardDescription>
@@ -142,7 +144,7 @@ export default function ProfilePage() {
                                     type="password"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
-                                    className="pl-9"
+                                    className="pl-9 transition-all focus:ring-2 focus:ring-primary/20"
                                 />
                             </div>
                         </div>
@@ -155,7 +157,7 @@ export default function ProfilePage() {
                                     type="password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="pl-9"
+                                    className="pl-9 transition-all focus:ring-2 focus:ring-primary/20"
                                 />
                             </div>
                         </div>
@@ -164,7 +166,7 @@ export default function ProfilePage() {
             </Card>
 
             <div className="flex justify-end">
-                <Button onClick={handleSave} disabled={saving} className="w-full md:w-auto">
+                <Button onClick={handleSave} disabled={saving} className="w-full md:w-auto shadow-lg shadow-primary/20 transition-all duration-300">
                     <Save className="mr-2 h-4 w-4" />
                     {saving ? 'Salvando...' : 'Salvar Alterações'}
                 </Button>

@@ -3,11 +3,13 @@ import React, { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus } from 'lucide-react';
+import { Plus, Cpu } from 'lucide-react';
 import api from '@/lib/api';
 import { LLMProviderTable } from '@/components/admin/llm-table';
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { LLMProviderForm } from '@/components/admin/llm-form';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 
 export default function LLMManagementPage() {
     const [providers, setProviders] = useState([]);
@@ -42,19 +44,26 @@ export default function LLMManagementPage() {
 
     return (
         <AdminLayout>
-            <div className="flex flex-col gap-6 mb-6">
-                <div className="flex justify-between items-center">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">LLM Providers</h1>
+            <div className={cn("space-y-8 p-2", PAGE_ANIMATION)}>
+                <PageHeader
+                    title="Configurações de LLM"
+                    description="Gerencie os provedores de inteligência artificial e modelos disponíveis na plataforma"
+                >
                     <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
                         <DialogTrigger asChild>
-                            <Button onClick={() => setEditingProvider(null)}>
+                            <Button
+                                onClick={() => setEditingProvider(null)}
+                                className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300"
+                            >
                                 <Plus className="w-4 h-4 mr-2" />
-                                Add Provider
+                                Adicionar Provedor
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[600px]">
                             <DialogHeader>
-                                <DialogTitle>{editingProvider ? 'Edit Provider' : 'Add New Provider'}</DialogTitle>
+                                <DialogTitle>
+                                    {editingProvider ? 'Editar Provedor' : 'Adicionar Novo Provedor'}
+                                </DialogTitle>
                             </DialogHeader>
                             <LLMProviderForm
                                 initialData={editingProvider}
@@ -65,26 +74,34 @@ export default function LLMManagementPage() {
                             />
                         </DialogContent>
                     </Dialog>
-                </div>
-            </div>
+                </PageHeader>
 
-            <div className="grid gap-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Manage AI Models</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {loading ? (
-                            <div>Loading...</div>
-                        ) : (
-                            <LLMProviderTable
-                                providers={providers}
-                                onUpdate={fetchProviders}
-                                onEdit={handleEdit}
-                            />
-                        )}
-                    </CardContent>
-                </Card>
+                <div className="grid gap-6">
+                    <Card className="shadow-md border border-border/50">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                            <div>
+                                <CardTitle className="text-xl font-bold">Modelos de IA</CardTitle>
+                                <p className="text-sm text-muted-foreground mt-1">Gerencie chaves de API e configurações de modelos</p>
+                            </div>
+                            <div className="p-2 bg-primary/10 rounded-lg">
+                                <Cpu className="h-5 w-5 text-primary" />
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            {loading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                </div>
+                            ) : (
+                                <LLMProviderTable
+                                    providers={providers}
+                                    onUpdate={fetchProviders}
+                                    onEdit={handleEdit}
+                                />
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </AdminLayout>
     );

@@ -15,16 +15,19 @@ interface User {
 export function useAuth(requiredRole?: string) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [token, setToken] = useState<string | null>(null);
     const router = useRouter();
 
     useEffect(() => {
+        const storedToken = localStorage.getItem('token');
+        setToken(storedToken);
         checkAuth();
     }, []);
 
     const checkAuth = async () => {
-        const token = localStorage.getItem('token');
+        const storedToken = localStorage.getItem('token');
 
-        if (!token) {
+        if (!storedToken) {
             setLoading(false);
             if (requiredRole) {
                 router.push('/auth/login');
@@ -35,12 +38,13 @@ export function useAuth(requiredRole?: string) {
         try {
             const response = await fetch(buildApiUrl('/auth/profile'), {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${storedToken}`,
                 },
             });
 
             if (!response.ok) {
                 localStorage.removeItem('token');
+                setToken(null);
                 setLoading(false);
                 router.push('/auth/login');
                 return;
@@ -61,11 +65,12 @@ export function useAuth(requiredRole?: string) {
         } catch (error) {
             console.error('Auth check failed:', error);
             localStorage.removeItem('token');
+            setToken(null);
             router.push('/auth/login');
         } finally {
             setLoading(false);
         }
     };
 
-    return { user, loading };
+    return { user, loading, token };
 }

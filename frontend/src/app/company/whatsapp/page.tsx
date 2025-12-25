@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 import { useSubscription } from '@/hooks/useSubscription';
 import SubscriptionRequiredOverlay from '@/components/subscription-required-overlay';
 import LimitReachedOverlay from '@/components/limit-reached-overlay';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 
 interface Agent {
     id: string;
@@ -193,7 +195,7 @@ export default function WhatsAppPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className={cn("space-y-8", PAGE_ANIMATION)}>
             <SubscriptionRequiredOverlay show={showNoSubscriptionModal} />
             <LimitReachedOverlay
                 show={showLimitModal}
@@ -201,16 +203,14 @@ export default function WhatsAppPage() {
                 currentLimit={subscription?.package?.maxSessions || 0}
                 onClose={() => setShowLimitModal(false)}
             />
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold">Conexões WhatsApp</h1>
-                    <p className="text-gray-500 mt-1">
-                        Gerencie as conexões WhatsApp dos seus agentes
-                    </p>
-                </div>
+            
+            <PageHeader
+                title="Conexões WhatsApp"
+                description="Gerencie as conexões WhatsApp dos seus agentes e acompanhe o status em tempo real"
+            >
                 <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-                    <Button onClick={handleCreateClick}>
-                        <Plus className="mr-2 h-4 w-4" />
+                    <Button onClick={handleCreateClick} size="lg" className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300">
+                        <Plus className="mr-2 h-5 w-5" />
                         Nova Conexão
                     </Button>
                     <DialogContent>
@@ -244,7 +244,7 @@ export default function WhatsAppPage() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-            </div>
+            </PageHeader>
 
             {agents.length === 0 ? (
                 <Card>

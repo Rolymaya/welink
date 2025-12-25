@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Smartphone, QrCode, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 
 interface Agent {
     id: string;
@@ -149,17 +151,11 @@ export default function WhatsAppConnectionPage() {
 
     return (
         <AdminLayout>
-            <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                            Conexões WhatsApp
-                        </h1>
-                        <p className="text-gray-500 dark:text-gray-400 mt-1">
-                            Conecte seus agentes ao WhatsApp Business
-                        </p>
-                    </div>
-                </div>
+            <div className={cn("space-y-8 p-2", PAGE_ANIMATION)}>
+                <PageHeader
+                    title="Conexões WhatsApp"
+                    description="Conecte seus agentes ao WhatsApp Business e acompanhe o status das sessões"
+                />
 
                 {loading ? (
                     <div className="flex items-center justify-center py-12">

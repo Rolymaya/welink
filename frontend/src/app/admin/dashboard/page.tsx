@@ -6,6 +6,8 @@ import { Activity, DollarSign, MessageSquare, Users, Package, TrendingUp, Credit
 import api from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#6366f1', '#f43f5e', '#14b8a6', '#a855f7'];
 
@@ -45,16 +47,18 @@ export default function AdminDashboard() {
 
     return (
         <AdminLayout>
-            <div className="space-y-8 p-2">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Dashboard Geral</h1>
-                        <p className="text-gray-500 dark:text-gray-400 mt-2">Visão geral do desempenho da plataforma SaaS</p>
-                    </div>
+            <div className={cn("space-y-8 p-2", PAGE_ANIMATION)}>
+                <PageHeader
+                    title="Dashboard Geral"
+                    description="Visão geral do desempenho da plataforma SaaS e estatísticas globais"
+                >
                     <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700">
-                        <span className="text-sm font-medium text-gray-500 px-2">Última atualização: {new Date().toLocaleTimeString()}</span>
+                        <span className="text-sm font-medium text-gray-500 px-2 flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            Última atualização: {new Date().toLocaleTimeString()}
+                        </span>
                     </div>
-                </div>
+                </PageHeader>
 
                 {/* KPI Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

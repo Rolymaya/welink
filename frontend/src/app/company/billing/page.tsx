@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Check, AlertTriangle, CreditCard, Users, MessageSquare, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { cn } from '@/lib/utils';
 
 interface Subscription {
     id: string;
@@ -80,27 +82,26 @@ export default function BillingPage() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Faturação e Plano</h1>
-                    <p className="text-muted-foreground">Gerencie sua subscrição e veja o uso de recursos.</p>
-                </div>
+        <div className={cn("space-y-8", PAGE_ANIMATION)}>
+            <PageHeader
+                title="Faturação e Plano"
+                description="Gerencie sua subscrição, veja o uso de recursos e transações"
+            >
                 <div className="flex gap-2">
                     <Link href="/company/billing/transactions">
-                        <Button variant="outline">
+                        <Button variant="outline" className="shadow-sm">
                             <CreditCard className="h-4 w-4 mr-2" />
                             Ver Transações
                         </Button>
                     </Link>
                     <Link href="/company/billing/upgrade">
-                        <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg shadow-purple-500/20">
+                        <Button className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-700 text-white shadow-lg shadow-primary/20 transition-all duration-300">
                             <CreditCard className="mr-2 h-4 w-4" />
                             Atualizar Plano
                         </Button>
                     </Link>
                 </div>
-            </div>
+            </PageHeader>
 
             <div className="grid gap-6 md:grid-cols-2">
                 {/* Current Plan Card */}
