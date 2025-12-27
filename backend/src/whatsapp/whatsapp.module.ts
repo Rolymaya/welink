@@ -10,6 +10,7 @@ import { AgendaModule } from '../agenda/agenda.module';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { ProductsModule } from '../products/products.module';
 import { HybridAgentService } from './hybrid-agent.service';
+import { EmailModule } from '../email/email.module';
 
 @Module({
     imports: [
@@ -21,6 +22,7 @@ import { HybridAgentService } from './hybrid-agent.service';
         forwardRef(() => AgendaModule),
         SubscriptionsModule,
         ProductsModule,
+        EmailModule,
     ],
     controllers: [WhatsAppController],
     providers: [

@@ -9,11 +9,12 @@ interface PageHeaderProps {
     title: string;
     description?: string;
     children?: ReactNode;
+    action?: ReactNode;
     className?: string;
     showBackButton?: boolean;
 }
 
-export function PageHeader({ title, description, children, className, showBackButton }: PageHeaderProps) {
+export function PageHeader({ title, description, children, action, className, showBackButton }: PageHeaderProps) {
     const router = useRouter();
 
     return (
@@ -39,8 +40,9 @@ export function PageHeader({ title, description, children, className, showBackBu
                     )}
                 </div>
             </div>
-            {children && (
+            {(children || action) && (
                 <div className="flex items-center gap-3">
+                    {action}
                     {children}
                 </div>
             )}

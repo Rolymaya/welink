@@ -6,6 +6,7 @@ import { ProductsModule } from '../products/products.module';
 import { WhatsAppModule } from '../whatsapp/whatsapp.module';
 import { BankAccountsModule } from '../bank-accounts/bank-accounts.module';
 import { AffiliatesModule } from '../affiliates/affiliates.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
     imports: [
@@ -13,7 +14,8 @@ import { AffiliatesModule } from '../affiliates/affiliates.module';
         ProductsModule,
         BankAccountsModule,
         AffiliatesModule,
-        forwardRef(() => WhatsAppModule)
+        forwardRef(() => WhatsAppModule),
+        EmailModule,
     ],
     controllers: [OrdersController],
     providers: [OrdersService],

@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader, PAGE_ANIMATION } from '@/components/page-header';
+import { ScheduleFormDialog } from '@/components/schedule-form-dialog';
 import { cn } from '@/lib/utils';
 
 interface Agenda {
@@ -52,6 +53,7 @@ export default function SchedulesPage() {
             <PageHeader
                 title="Agendamentos"
                 description="Gerencie suas reuniões e compromissos agendados pela IA"
+                action={<ScheduleFormDialog onSuccess={loadSchedules} />}
             />
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

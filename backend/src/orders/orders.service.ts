@@ -5,6 +5,7 @@ import { ProductsService } from '../products/products.service';
 import { WhatsAppService } from '../whatsapp/whatsapp.service';
 import { BankAccountsService } from '../bank-accounts/bank-accounts.service';
 import { AffiliatesService } from '../affiliates/affiliates.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class OrdersService {
@@ -15,6 +16,7 @@ export class OrdersService {
         private affiliatesService: AffiliatesService,
         @Inject(forwardRef(() => WhatsAppService))
         private whatsappService: WhatsAppService,
+        private emailService: EmailService,
     ) { }
 
     async create(organizationId: string, dto: CreateOrderDto) {
@@ -96,6 +98,17 @@ export class OrdersService {
                     },
                 });
             }
+        }
+
+        // Send Email Notification to Admin
+        const adminEmail = process.env.ADMIN_EMAIL;
+        if (adminEmail) {
+            await this.emailService.sendNewOrderNotification(adminEmail, {
+                orderId: order.id,
+                customerName: order.contact?.name || 'Cliente',
+                totalAmount: order.totalAmount,
+                itemCount: dto.items.length,
+            });
         }
 
         return order;
@@ -226,6 +239,48 @@ export class OrdersService {
                     );
                 } catch (notifyError) {
                     console.error('[OrdersService] Failed to send rejection notification:', notifyError.message);
+                }
+            }
+
+            // AUTOMATION: Order PROCESSING (Payment Confirmed)
+            if (dto.status === 'PROCESSING' && updatedOrder.contact?.phone) {
+                try {
+                    const message = `Olá ${updatedOrder.contact.name || ''}! 👋\n\n` +
+                        `Confirmamos o recebimento do seu pagamento! ✅\n\n` +
+                        `O seu pedido *#${updatedOrder.id.slice(0, 8)}* está agora em processamento e será preparado para envio.\n\n` +
+                        `Avisaremos assim que sair para entrega! 📦`;
+
+                    await this.whatsappService.sendNotification(organizationId, updatedOrder.contact.phone, message);
+                } catch (e) {
+                    console.error('[OrdersService] Failed to send PROCESSING notification:', e);
+                }
+            }
+
+            // AUTOMATION: Order SHIPPED
+            if (dto.status === 'SHIPPED' && updatedOrder.contact?.phone) {
+                try {
+                    const message = `Boas notícias ${updatedOrder.contact.name || ''}! 🚚\n\n` +
+                        `O seu pedido *#${updatedOrder.id.slice(0, 8)}* foi enviado e está a caminho do endereço:\n` +
+                        `📍 ${updatedOrder.deliveryAddress}\n\n` +
+                        `Por favor, esteja atento ao telefone para a receção.`;
+
+                    await this.whatsappService.sendNotification(organizationId, updatedOrder.contact.phone, message);
+                } catch (e) {
+                    console.error('[OrdersService] Failed to send SHIPPED notification:', e);
+                }
+            }
+
+            // AUTOMATION: Order COMPLETED
+            if (dto.status === 'COMPLETED' && updatedOrder.contact?.phone) {
+                try {
+                    const message = `Olá ${updatedOrder.contact.name || ''}! 👋\n\n` +
+                        `O seu pedido *#${updatedOrder.id.slice(0, 8)}* foi entregue com sucesso! ✅\n\n` +
+                        `Esperamos que goste dos seus produtos. Muito obrigado pela preferência!\n` +
+                        `Se puder, dê-nos um feedback sobre a sua experiência. ⭐`;
+
+                    await this.whatsappService.sendNotification(organizationId, updatedOrder.contact.phone, message);
+                } catch (e) {
+                    console.error('[OrdersService] Failed to send COMPLETED notification:', e);
                 }
             }
 

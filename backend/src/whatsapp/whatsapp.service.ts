@@ -14,6 +14,7 @@ import { VectorStoreService } from '../knowledge/vector-store.service';
 import { IngestionService } from '../knowledge/ingestion.service';
 import { AgentToolsService } from '../agent/agent-tools.service';
 import { HybridAgentService } from './hybrid-agent.service';
+import { EmailService } from '../email/email.service';
 
 import { downloadMediaMessage } from '@whiskeysockets/baileys';
 import axios from 'axios';
@@ -35,6 +36,7 @@ export class WhatsAppService implements OnModuleInit {
         @Inject(forwardRef(() => AgentToolsService))
         private agentToolsService: AgentToolsService,
         private hybridAgent: HybridAgentService,
+        private emailService: EmailService,
     ) { }
 
     async onModuleInit() {
@@ -122,15 +124,39 @@ export class WhatsAppService implements OnModuleInit {
         sock.ev.on('messages.upsert', async (m) => {
             if (m.type === 'notify') {
                 for (const msg of m.messages) {
-                    // Apenas processar mensagens privadas (não grupos ou canais)
-                    const remoteJid = msg.key.remoteJid;
-                    const isPrivateChat = remoteJid?.endsWith('@s.whatsapp.net');
+                    // Skip messages sent by us
+                    if (msg.key.fromMe) {
+                        continue;
+                    }
 
-                    if (!msg.key.fromMe && isPrivateChat) {
-                        console.log('[WhatsApp] Processing private message from:', remoteJid);
+                    const remoteJid = msg.key.remoteJid;
+
+                    // Log for debugging
+                    console.log('[WhatsApp] Received message:', {
+                        remoteJid,
+                        participant: msg.key.participant,
+                        fromMe: msg.key.fromMe,
+                        messageType: Object.keys(msg.message || {})[0]
+                    });
+
+                    // Check if it's a private chat
+                    // Traditional format: @s.whatsapp.net
+                    // New LID format: @lid (WhatsApp Channels/Lists)
+                    // Groups: @g.us
+                    // Broadcasts: @broadcast
+                    const isPrivateChat = remoteJid?.endsWith('@s.whatsapp.net') || remoteJid?.endsWith('@lid');
+                    const isGroup = remoteJid?.endsWith('@g.us');
+                    const isBroadcast = remoteJid?.includes('@broadcast');
+
+                    if (isPrivateChat) {
+                        console.log('[WhatsApp] ✅ Processing private message from:', remoteJid);
                         this.handleIncomingMessage(sessionId, msg);
-                    } else if (!isPrivateChat && !msg.key.fromMe) {
-                        console.log('[WhatsApp] Ignoring non-private message from:', remoteJid);
+                    } else if (isGroup) {
+                        console.log('[WhatsApp] ⏭️ Ignoring group message from:', remoteJid);
+                    } else if (isBroadcast) {
+                        console.log('[WhatsApp] ⏭️ Ignoring broadcast message from:', remoteJid);
+                    } else {
+                        console.log('[WhatsApp] ⚠️ Unknown message type from:', remoteJid);
                     }
                 }
             }
@@ -140,7 +166,12 @@ export class WhatsAppService implements OnModuleInit {
     async handleIncomingMessage(sessionId: string, msg: any) {
         console.log('[WhatsApp] ========== INCOMING MESSAGE ==========');
         console.log('[WhatsApp] SessionId:', sessionId);
-        console.log('[WhatsApp] Message key:', msg.key);
+        console.log('[WhatsApp] Message key:', JSON.stringify(msg.key, null, 2));
+        console.log('[WhatsApp] Message info:', JSON.stringify({
+            pushName: msg.pushName,
+            participant: msg.participant,
+            verifiedBizName: msg.verifiedBizName,
+        }, null, 2));
         console.log('[WhatsApp] Full message object:', JSON.stringify(msg.message, null, 2));
 
         const remoteJid = msg.key.remoteJid;
@@ -221,19 +252,29 @@ export class WhatsAppService implements OnModuleInit {
             sessionId: session.id,
             agentId: session.agent.id,
             agentName: session.agent.name,
-            orgId: session.agent.organizationId,
             isActive: session.agent.isActive,
         });
 
-        if (!session.agent.isActive) {
-            console.log(`[WhatsApp] Agent ${session.agent.name} is paused. Skipping response.`);
-            return;
-        }
+        // Extract phone number from remoteJid
+        // IMPORTANT: When using LID format (@lid), the real phone number is in remoteJidAlt
+        // Format examples:
+        // - Traditional: remoteJid = "244123456789@s.whatsapp.net"
+        // - LID format: remoteJid = "135163359031394@lid", remoteJidAlt = "244945571613@s.whatsapp.net"
+        const useRemoteJid = msg.key.remoteJidAlt || remoteJid;
+        let whatsappNumber = useRemoteJid.split('@')[0];
 
-        const whatsappNumber = remoteJid.split('@')[0];
+        // Log the extraction for debugging
+        console.log('[WhatsApp] Phone number extraction:', {
+            originalRemoteJid: remoteJid,
+            remoteJidAlt: msg.key.remoteJidAlt,
+            usedJid: useRemoteJid,
+            extractedNumber: whatsappNumber,
+            format: remoteJid.includes('@lid') ? 'LID' : 'Traditional'
+        });
+
         const organizationId = session.agent.organizationId;
 
-        // 2. Find or create Contact
+        // 2. Find or create Contact (ALWAYS, even if agent is disabled)
         console.log('[WhatsApp] Step 2: Finding or creating contact...');
         let contact = await this.prisma.contact.findFirst({
             where: {
@@ -241,6 +282,7 @@ export class WhatsAppService implements OnModuleInit {
                 organizationId,
             },
         });
+
 
         if (!contact) {
             console.log(`[WhatsApp] Creating new contact: ${whatsappNumber}`);
@@ -256,7 +298,7 @@ export class WhatsAppService implements OnModuleInit {
 
         console.log('[WhatsApp] Contact found/created:', contact.id);
 
-        // 3. Save incoming message
+        // 3. Save incoming message (ALWAYS, even if agent is disabled)
         console.log('[WhatsApp] Step 3: Saving incoming message...');
         await this.prisma.message.create({
             data: {
@@ -268,7 +310,13 @@ export class WhatsAppService implements OnModuleInit {
         });
         console.log('[WhatsApp] Incoming message saved');
 
-        // 4. Get active LLM Provider
+        // 4. Check if agent is active - if not, stop here
+        if (!session.agent.isActive) {
+            console.log(`[WhatsApp] Agent ${session.agent.name} is paused. Contact and message saved, but no AI processing.`);
+            return;
+        }
+
+        // 5. Get active LLM Provider
         console.log('[WhatsApp] Step 4: Getting active LLM provider...');
         const provider = await this.llmProviderService.getActiveProvider();
         if (!provider) {
@@ -281,7 +329,7 @@ export class WhatsAppService implements OnModuleInit {
             model: provider.model,
         });
 
-        // 5. Generate AI response
+        // 6. Generate AI response
         console.log('[WhatsApp] Step 5: Generating AI response...');
 
         // Send "typing..." status
