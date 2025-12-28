@@ -38,6 +38,12 @@ export class BankAccountsController {
         return this.bankAccountsService.findActive(orgId);
     }
 
+    @Get('system')
+    @Roles('COMPANY_ADMIN', 'SUPER_ADMIN')
+    findSystem() {
+        return this.bankAccountsService.findSystem();
+    }
+
     @Get(':id')
     @Roles('SUPER_ADMIN', 'COMPANY_ADMIN')
     findOne(@Param('id') id: string) {

@@ -23,9 +23,17 @@ export class BankAccountsService {
         return this.prisma.bankAccount.findMany({
             where: {
                 isActive: true,
-                organizationId: organizationId || null // If orgId is provided, use it. If not, look for global (null) or handle as needed. 
-                // Actually, for the Agent, we want SPECIFIC org accounts.
-                // If organizationId is undefined, it might mean "Super Admin" context searching for global accounts.
+                organizationId: organizationId || null // If orgId is provided, use it. If not, look for global (null)
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+
+    async findSystem() {
+        return this.prisma.bankAccount.findMany({
+            where: {
+                isActive: true,
+                organizationId: null // System accounts have no organizationId
             },
             orderBy: { createdAt: 'desc' },
         });

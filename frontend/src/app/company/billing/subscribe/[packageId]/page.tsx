@@ -38,7 +38,7 @@ export default function SubscribePage() {
     const fetchBankAccounts = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(buildApiUrl('/bank-accounts/active'), {
+            const response = await fetch(buildApiUrl('/bank-accounts/system'), {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (response.ok) {
