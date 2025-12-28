@@ -65,10 +65,10 @@ ALTER TABLE `AffiliateReferral` ADD CONSTRAINT `AffiliateReferral_referredOrgId_
 ALTER TABLE `AffiliateTransaction` ADD CONSTRAINT `AffiliateTransaction_affiliateProfileId_fkey` FOREIGN KEY (`affiliateProfileId`) REFERENCES `AffiliateProfile`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- RenameIndex
-ALTER TABLE `subscription` RENAME INDEX `Subscription_organizationId_fkey` TO `Subscription_organizationId_idx`;
+ALTER TABLE `Subscription` RENAME INDEX `Subscription_organizationId_fkey` TO `Subscription_organizationId_idx`;
 
 -- RenameIndex
-ALTER TABLE `subscription` RENAME INDEX `Subscription_packageId_fkey` TO `Subscription_packageId_idx`;
+ALTER TABLE `Subscription` RENAME INDEX `Subscription_packageId_fkey` TO `Subscription_packageId_idx`;
 
 -- RenameIndex
-ALTER TABLE `user` RENAME INDEX `User_organizationId_fkey` TO `User_organizationId_idx`;
+ALTER TABLE `User` RENAME INDEX `User_organizationId_fkey` TO `User_organizationId_idx`;
