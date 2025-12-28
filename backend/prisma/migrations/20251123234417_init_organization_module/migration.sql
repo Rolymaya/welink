@@ -30,6 +30,8 @@ CREATE TABLE `Organization` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
+    `openaiVectorStoreId` VARCHAR(191) NULL,
+
     UNIQUE INDEX `Organization_slug_key`(`slug`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -42,6 +44,8 @@ CREATE TABLE `Agent` (
     `organizationId` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
+
+    `openaiAssistantId` VARCHAR(191) NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -68,6 +72,8 @@ CREATE TABLE `Contact` (
     `tags` VARCHAR(191) NOT NULL DEFAULT '',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
+
+    `openaiConversationId` VARCHAR(191) NULL,
 
     UNIQUE INDEX `Contact_organizationId_phone_key`(`organizationId`, `phone`),
     PRIMARY KEY (`id`)
