@@ -1,3 +1,3 @@
 -- AlterTable
-ALTER TABLE `affiliatetransaction` ADD COLUMN `bankSnapshot` JSON NULL,
+ALTER TABLE `AffiliateTransaction` ADD COLUMN `bankSnapshot` JSON NULL,
     MODIFY `status` ENUM('PENDING', 'APPROVED', 'COMPLETED', 'REJECTED') NOT NULL DEFAULT 'COMPLETED';

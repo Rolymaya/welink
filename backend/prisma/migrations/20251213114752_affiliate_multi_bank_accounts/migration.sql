@@ -9,7 +9,7 @@
 
 */
 -- AlterTable
-ALTER TABLE `affiliateprofile` DROP COLUMN `accountHolder`,
+ALTER TABLE `AffiliateProfile` DROP COLUMN `accountHolder`,
     DROP COLUMN `accountNumber`,
     DROP COLUMN `bankName`,
     DROP COLUMN `iban`,

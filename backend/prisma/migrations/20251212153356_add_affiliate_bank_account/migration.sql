@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE `affiliateprofile` ADD COLUMN `accountHolder` VARCHAR(191) NULL,
+ALTER TABLE `AffiliateProfile` ADD COLUMN `accountHolder` VARCHAR(191) NULL,
     ADD COLUMN `accountNumber` VARCHAR(191) NULL,
     ADD COLUMN `bankName` VARCHAR(191) NULL,
     ADD COLUMN `iban` VARCHAR(191) NULL,
