@@ -104,17 +104,17 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto text-center space-y-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium">
               <Sparkles className="h-4 w-4" />
-              Powered by Advanced AI
+              Powered By Wenova Geração
             </div>
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-              Automatize o Atendimento
+              Contrate Funcionários Digitais
               <br />
               <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                com Inteligência Artificial
+                que Trabalham 24h por Dia
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto leading-relaxed">
-              Crie agentes de IA que respondem automaticamente no WhatsApp, aprendem com sua base de conhecimento e atendem seus clientes 24/7.
+              Venda, agende e atenda seus clientes no WhatsApp 24/7 com perfeição.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Link href="/auth/register">
@@ -152,27 +152,27 @@ export default function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
             <div className="text-center">
               <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                10k+
+                100k+
               </div>
-              <div className="text-gray-600 dark:text-gray-400 mt-2">Mensagens/dia</div>
+              <div className="text-gray-600 dark:text-gray-400 mt-2">Vendas Convertidas</div>
             </div>
             <div className="text-center">
               <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                99.9%
+                24/7
               </div>
-              <div className="text-gray-600 dark:text-gray-400 mt-2">Uptime</div>
+              <div className="text-gray-600 dark:text-gray-400 mt-2">Trabalho Ininterrupto</div>
             </div>
             <div className="text-center">
               <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent">
-                24/7
+                10k+
               </div>
-              <div className="text-gray-600 dark:text-gray-400 mt-2">Disponibilidade</div>
+              <div className="text-gray-600 dark:text-gray-400 mt-2">Empresas Felizes</div>
             </div>
             <div className="text-center">
               <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-orange-600 to-blue-600 bg-clip-text text-transparent">
                 &lt;1s
               </div>
-              <div className="text-gray-600 dark:text-gray-400 mt-2">Tempo de resposta</div>
+              <div className="text-gray-600 dark:text-gray-400 mt-2">Resposta Humanizada</div>
             </div>
           </div>
         </div>
@@ -183,11 +183,11 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Tudo que Precisa para
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Automatizar</span>
+              O Seu Novo Time de
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Especialistas Digitais</span>
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400">
-              Funcionalidades poderosas para transformar o atendimento da sua empresa
+              Funcionários altamente treinados para escalar o seu negócio sem aumentar a folha de pagamento
             </p>
           </div>
 
@@ -195,38 +195,38 @@ export default function HomePage() {
             {[
               {
                 icon: MessageSquare,
-                title: 'WhatsApp Integrado',
-                description: 'Conecte múltiplas contas WhatsApp e gerencie todas as conversas em um só lugar.',
+                title: 'Vendedor WhatsApp 24/7',
+                description: 'Seu funcionário digital apresenta produtos, tira dúvidas e fecha vendas no WhatsApp, mesmo enquanto você dorme.',
                 color: 'from-green-500 to-emerald-600'
               },
               {
                 icon: Database,
-                title: 'Base de Conhecimento',
-                description: 'Carregue documentos, PDFs e URLs. A IA aprende automaticamente com seu conteúdo.',
+                title: 'Treinamento Instantâneo',
+                description: 'Basta subir um PDF ou colar o link do seu site para que seu funcionário digital aprenda tudo sobre sua empresa e responda como um humano.',
                 color: 'from-blue-500 to-cyan-600'
               },
               {
-                icon: Bot,
-                title: 'Agentes Inteligentes',
-                description: 'Crie múltiplos agentes com personalidades e conhecimentos específicos.',
+                icon: Users,
+                title: 'Base de Contactos (CRM)',
+                description: 'Cada pessoa que envia mensagem é gravada automaticamente. Construa uma lista valiosa de clientes sem esforço manual.',
                 color: 'from-purple-500 to-pink-600'
               },
               {
                 icon: Calendar,
-                title: 'Agendamentos',
-                description: 'Permita que clientes agendem compromissos diretamente pelo WhatsApp.',
+                title: 'Secretária Integrada',
+                description: 'Agendamento automático de reuniões e serviços diretamente pelo chat, sincronizado com sua agenda.',
                 color: 'from-orange-500 to-red-600'
               },
               {
                 icon: BarChart3,
-                title: 'Analytics Avançado',
-                description: 'Acompanhe métricas, conversas e performance dos seus agentes em tempo real.',
+                title: 'Relatórios de Performance',
+                description: 'Acompanhe a produtividade do seu time digital com métricas detalhadas de conversão e atendimento.',
                 color: 'from-indigo-500 to-purple-600'
               },
               {
                 icon: Shield,
-                title: 'Segurança Total',
-                description: 'Dados criptografados, backup automático e conformidade com LGPD.',
+                title: 'Segurança e Confiabilidade',
+                description: 'Atendimento humanizado com a precisão de uma máquina. Sem erros, sem atrasos, sempre disponível.',
                 color: 'from-gray-700 to-gray-900'
               }
             ].map((feature, index) => (
@@ -254,7 +254,7 @@ export default function HomePage() {
               Como <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Funciona</span>
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-400">
-              Em apenas 3 passos simples, seu agente de IA estará pronto
+              Contrate seu primeiro trabalhador digital em poucos minutos
             </p>
           </div>
 
@@ -262,20 +262,20 @@ export default function HomePage() {
             {[
               {
                 step: '01',
-                title: 'Crie seu Agente',
-                description: 'Configure a personalidade, tom de voz e instruções específicas para seu agente de IA.',
+                title: 'Defina o Cargo',
+                description: 'Configure a personalidade, tom de voz e as tarefas que seu novo funcionário digital irá realizar.',
                 icon: Bot
               },
               {
                 step: '02',
-                title: 'Adicione Conhecimento',
-                description: 'Carregue documentos, links e informações que seu agente deve conhecer.',
+                title: 'Treine seu Funcionário',
+                description: 'Suba manuais, PDFs ou o link do seu site. Ele aprenderá tudo sobre seu negócio instantaneamente.',
                 icon: Database
               },
               {
                 step: '03',
-                title: 'Conecte ao WhatsApp',
-                description: 'Escaneie o QR code e comece a atender clientes automaticamente.',
+                title: 'Coloque para Trabalhar',
+                description: 'Conecte ao seu WhatsApp e veja a mágica acontecer. Atendimento automático e vendas 24/7.',
                 icon: MessageSquare
               }
             ].map((item, index) => (
@@ -309,20 +309,20 @@ export default function HomePage() {
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="lg:w-1/2 space-y-8 lg:pl-20">
               <h2 className="text-4xl font-bold leading-tight">
-                Gerencie tudo em um <br />
+                Controle Seu Time de <br />
                 <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Painel Intuitivo
+                  Funcionários Digitais
                 </span>
               </h2>
               <p className="text-xl text-gray-600 dark:text-gray-400">
-                Acompanhe métricas em tempo real, gerencie conversas e treine seu agente de IA, tudo em um único lugar.
+                Acompanhe a produtividade em tempo real, gerencie conversas e treine seus funcionários digitais em um único painel intuitivo.
               </p>
               <ul className="space-y-4">
                 {[
-                  'Analytics detalhado de conversas',
-                  'Gestão de base de conhecimento',
+                  'Analytics detalhado de produtividade',
+                  'Gestão centralizada de conhecimento',
                   'Histórico completo de atendimentos',
-                  'Configurações avançadas de IA'
+                  'Treinamento e ajustes em tempo real'
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <div className="h-6 w-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -383,13 +383,13 @@ export default function HomePage() {
                 const isPopular = index === 1 && packages.length >= 3; // Middle package is popular
 
                 const features = [
-                  `${pkg.maxAgents} ${pkg.maxAgents === 1 ? 'Agente' : 'Agentes'} de IA`,
+                  `${pkg.maxAgents} ${pkg.maxAgents === 1 ? 'Funcionário Digital' : 'Funcionários Digitais'}`,
                   `${pkg.maxSessions} ${pkg.maxSessions === 1 ? 'Sessão' : 'Sessões'} WhatsApp`,
-                  `${pkg.maxContacts.toLocaleString()} Contactos`,
-                  'Base de conhecimento',
-                  ...(pkg.allowScheduling ? ['Agendamentos'] : []),
-                  ...(pkg.allowAudioResponse ? ['Respostas em áudio'] : []),
-                  'Suporte técnico'
+                  `${pkg.maxContacts.toLocaleString()} Contactos Gravados`,
+                  'Treinamento por Documentos/Site',
+                  ...(pkg.allowScheduling ? ['Secretária Digital (Agendamentos)'] : []),
+                  ...(pkg.allowAudioResponse ? ['Resposta em Áudio Humanizada'] : []),
+                  'Suporte Prioritário'
                 ];
 
                 const borderColors = [
@@ -468,20 +468,20 @@ export default function HomePage() {
             {[
               {
                 name: 'João Silva',
-                role: 'CEO, TechStart',
-                content: 'Reduziu nosso tempo de resposta em 80%. Os clientes adoram o atendimento instantâneo!',
+                role: 'Proprietário, TechStart',
+                content: 'Meu funcionário digital atende centenas de pessoas ao mesmo tempo. É como ter uma equipe de vendas que nunca dorme.',
                 rating: 5
               },
               {
                 name: 'Maria Santos',
-                role: 'Gerente de Vendas, ComércioPlus',
-                content: 'Conseguimos atender 3x mais clientes com a mesma equipe. ROI incrível!',
+                role: 'Gerente Comercial, ComércioPlus',
+                content: 'A base de contactos automática mudou nossa empresa. Agora temos os dados de todos que nos chamam, prontos para vender mais.',
                 rating: 5
               },
               {
                 name: 'Pedro Costa',
                 role: 'Diretor, ServiçoPro',
-                content: 'A integração com WhatsApp foi perfeita. Implementação rápida e suporte excelente.',
+                content: 'Subi o PDF do nosso manual e em segundos o funcionário digital já sabia tudo sobre nossos serviços. Impressionante!',
                 rating: 5
               }
             ].map((testimonial, index) => (
@@ -608,10 +608,10 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center space-y-8">
             <h2 className="text-4xl md:text-5xl font-bold text-white">
-              Pronto para Revolucionar seu Atendimento?
+              Pronto para Contratar Seus Primeiros Funcionários Digitais?
             </h2>
             <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-              Junte-se a centenas de empresas que já automatizaram seu atendimento com IA
+              Escala o seu negócio com atendimento automático 24/7 e nunca mais perca uma venda.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Link href="/auth/register">
@@ -641,7 +641,7 @@ export default function HomePage() {
                 <span className="text-xl font-bold text-white">WeLinkAI</span>
               </div>
               <p className="text-sm text-gray-400">
-                Automatize o atendimento da sua empresa com inteligência artificial.
+                Automatize o crescimento da sua empresa com funcionários digitais 24/7.
               </p>
             </div>
 
