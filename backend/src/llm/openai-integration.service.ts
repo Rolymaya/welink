@@ -9,27 +9,28 @@ export class OpenAIIntegrationService {
 
     // Instruções padrão de workflow e agendamento
     private readonly WORKFLOW_INSTRUCTIONS = `
-REGRAS OBRIGATÓRIAS DE PESQUISA:
-1. PESQUISA PRIMÁRIA (Produtos): Se o cliente perguntar sobre produtos, preços ou stock, use SEMPRE catalog_search primeiro.
-2. PESQUISA SECUNDÁRIA (Conhecimento): Se a informação não for um produto (ex: serviços, quem somos, políticas, horários), use SEMPRE a sua base de conhecimento (file_search) antes de responder ou escalar.
-3. ESCALAÇÃO (Último Recurso): Só use "schedule_follow_up" se REALMENTE não encontrar a informação após pesquisar no catálogo E na base de conhecimento.
-4. Use SEMPRE o campo "id" (UUID) do catalog_search nas outras ferramentas.
-5. NUNCA mencione IDs técnicos (UUIDs) ou códigos ao cliente.
-6. Seja natural, direto e proativo nas respostas.
+REGRAS OBRIGATÓRIAS DE COMUNICAÇÃO (ARQUITETURA TOOL-FIRST):
+1. **NUNCA responda com texto livre.** Toda e qualquer resposta ao usuário deve ser enviada via ferramenta 'send_response'.
+2. **PROTOCOLO DE RESPOSTA**:
+   - Analise a mensagem do usuário.
+   - Execute as ferramentas necessárias (pesquisa, banco, pedidos).
+   - Após obter TODOS os resultados, formule a resposta humana e chame 'send_response'.
+3. **REGRA SUPREMA (Pesquisa de Conhecimento)**:
+   - Para QUALQUER pergunta que não seja sobre stock de produtos físicos, você DEVE começar consultando a sua base de conhecimento (gaveta/file_search).
+   - Se a informação estiver lá, use-a. Se não estiver, use 'catalog_search' ou 'schedule_follow_up'.
+4. **PROIBIÇÕES GLOBAIS (NUNCA diga estas frases)**:
+   - "não encontrei", "não sei", "não tenho acesso", "vou verificar agora", "um momento", "estou pesquisando".
+   - Em vez disso: Se não souber, use 'schedule_follow_up' para que um humano responda depois, ou ofereça uma alternativa útil.
+5. **HUMANIZAÇÃO**:
+   - Seja natural, prestativo e evite listas robóticas.
+   - Aceite qualquer formato de endereço. NUNCA peça código postal.
 `;
 
     private readonly SCHEDULING_INSTRUCTIONS = `
 CAPACIDADE DE AGENDAMENTO:
-Você pode agendar reuniões, chamadas ou visitas. 
-SÓ traga isso à tona se o usuário pedir explicitamente (ex: "me ligue amanhã", "podemos marcar?").
-Quando confirmado, use este formato no FIM da resposta:
-[SCHEDULE]
-{
-  "subject": "Assunto do Agendamento",
-  "date": "YYYY-MM-DD HH:mm",
-  "summary": "Breve resumo"
-}
-[/SCHEDULE]
+1. NUNCA use o formato [SCHEDULE] em texto.
+2. Use EXCLUSIVAMENTE a ferramenta 'create_schedule' para marcar reuniões ou visitas.
+3. Só agende se o usuário pedir ou concordar explicitamente.
 `;
 
     constructor(private prisma: PrismaService) { }

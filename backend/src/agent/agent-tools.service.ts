@@ -180,6 +180,34 @@ export class AgentToolsService {
     }
 
     /**
+     * Tool: send_response
+     * MANDATORY: Used by LLM to send the final human message to the user.
+     */
+    async sendResponse(text: string) {
+        return { success: true, delivered: true, text };
+    }
+
+    /**
+     * Tool: create_schedule
+     * Replaces the old [SCHEDULE] text protocol. Creates a meeting/visit in the system.
+     */
+    async createSchedule(organizationId: string, contactId: string, subject: string, date: string, summary: string) {
+        try {
+            await this.agendaService.create({
+                subject,
+                date: new Date(date),
+                summary,
+                organizationId,
+                contactId,
+                client: 'Cliente WhatsApp'
+            });
+            return { success: true, message: 'Agendamento realizado com sucesso.' };
+        } catch (error) {
+            return { success: false, message: 'Erro ao criar agendamento: ' + error.message };
+        }
+    }
+
+    /**
      * Generates the function definitions for OpenAI function calling
      */
     getFunctionDefinitions() {
@@ -277,6 +305,33 @@ export class AgentToolsService {
                         },
                     },
                     required: ['query'],
+                },
+            },
+            {
+                name: 'send_response',
+                description: 'OBRIGATÓRIO: Use esta ferramenta para enviar a sua resposta humana final ao cliente. Chame esta ferramenta APENAS UMA VEZ no final da sua execução, após processar todas as outras ferramentas necessárias.',
+                parameters: {
+                    type: 'object',
+                    properties: {
+                        text: {
+                            type: 'string',
+                            description: 'A mensagem amigável e humana que será enviada ao cliente via WhatsApp.',
+                        },
+                    },
+                    required: ['text'],
+                },
+            },
+            {
+                name: 'create_schedule',
+                description: 'Cria um agendamento (reunião, visita ou chamada) no sistema para o cliente.',
+                parameters: {
+                    type: 'object',
+                    properties: {
+                        subject: { type: 'string', description: 'Assunto do agendamento' },
+                        date: { type: 'string', description: 'Data e hora no formato YYYY-MM-DD HH:mm (Ex: 2024-10-25 14:30)' },
+                        summary: { type: 'string', description: 'Resumo ou pauta da reunião' },
+                    },
+                    required: ['subject', 'date', 'summary'],
                 },
             },
         ];

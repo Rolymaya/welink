@@ -43,6 +43,7 @@ export class HybridAgentService {
 
         // 3. Loop de processamento de Tool Calls (se necessário)
         const openai: any = await (this.openaiIntegration as any).getClient();
+        let finalMessage = '';
 
         while (run.status === 'requires_action') {
             const toolCalls = run.required_action?.submit_tool_outputs.tool_calls || [];
@@ -76,6 +77,13 @@ export class HybridAgentService {
                         case 'schedule_follow_up':
                             output = await this.agentTools.scheduleFollowUp(organizationId, contactId, args.query);
                             break;
+                        case 'create_schedule':
+                            output = await this.agentTools.createSchedule(organizationId, contactId, args.subject, args.date, args.summary);
+                            break;
+                        case 'send_response':
+                            output = await this.agentTools.sendResponse(args.text);
+                            finalMessage = args.text; // Captura a mensagem final
+                            break;
                         default:
                             output = { error: 'Ferramenta não encontrada' };
                     }
@@ -98,12 +106,18 @@ export class HybridAgentService {
 
         // 4. Obter a resposta final
         if (run.status === 'completed') {
-            const finalResponse = await this.openaiIntegration.getRunResult(threadId, run.id);
+            // Se o LLM usou a ferramenta send_response, usamos o texto capturado.
+            // Caso contrário, tentamos pegar o conteúdo da última mensagem (fallback).
+            let response = finalMessage;
+            if (!response) {
+                this.logger.warn('[HybridAgent] LLM não usou a ferramenta send_response. Pegando resposta direta.');
+                response = await this.openaiIntegration.getRunResult(threadId, run.id);
+            }
 
             // Salvar no Vector Store local (Audit)
-            await this.saveToVectorStore(userInput, finalResponse, contactId, organizationId);
+            await this.saveToVectorStore(userInput, response, contactId, organizationId);
 
-            return finalResponse;
+            return response;
         } else {
             this.logger.error(`Run falhou com status: ${run.status}`);
             return 'Desculpe, tive um problema ao processar a sua solicitação. Por favor, tente novamente.';

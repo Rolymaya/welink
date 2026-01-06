@@ -97,15 +97,23 @@ export class WhatsAppService implements OnModuleInit {
             }
 
             if (connection === 'close') {
-                const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
-                console.log('connection closed due to ', lastDisconnect?.error, ', reconnecting ', shouldReconnect);
-                if (shouldReconnect) {
+                const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+                const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+
+                console.log(`[WhatsApp] Connection closed for ${sessionId}. Status: ${statusCode}, Reconnecting: ${shouldReconnect}`);
+
+                if (statusCode === 401) {
+                    console.error(`[WhatsApp] 🚨 Session ${sessionId} is UNAUTHORIZED (401). Deleting session directory to force a clean state.`);
+                    await this.cleanupSessionData(sessionId);
+                }
+
+                if (shouldReconnect && statusCode !== 401) { // Don't auto-reconnect if 401, wait for manual scan
                     this.createSession(sessionId);
                 } else {
                     try {
                         await this.prisma.session.update({
                             where: { id: sessionId },
-                            data: { status: 'DISCONNECTED' },
+                            data: { status: 'DISCONNECTED', qrCode: null },
                         });
                     } catch (error) {
                         console.error(`Error updating session ${sessionId} to DISCONNECTED:`, error);
@@ -374,7 +382,7 @@ export class WhatsAppService implements OnModuleInit {
     async reconnectSession(sessionId: string) {
         console.log(`[WhatsApp] Reconnecting session: ${sessionId}`);
 
-        // 1. Close existing socket if any (without deleting session files)
+        // 1. Close existing socket if any
         const sock = this.sessions.get(sessionId);
         if (sock) {
             try {
@@ -386,10 +394,28 @@ export class WhatsAppService implements OnModuleInit {
             this.sessions.delete(sessionId);
         }
 
-        // 2. Try to reconnect using existing credentials
+        // 2. Perform a preemptive cleanup to ensure we get a new QR if the session was bad
+        await this.cleanupSessionData(sessionId);
+
+        // 3. Try to reconnect/create new session
         await this.createSession(sessionId);
 
         console.log(`[WhatsApp] Reconnection initiated for session: ${sessionId}`);
+    }
+
+    /**
+     * Helper to safely delete session directory on the filesystem
+     */
+    private async cleanupSessionData(sessionId: string) {
+        const sessionDir = path.join(__dirname, '../../sessions', sessionId);
+        if (fs.existsSync(sessionDir)) {
+            try {
+                fs.rmSync(sessionDir, { recursive: true, force: true });
+                console.log(`[WhatsApp] Cleaned up session data: ${sessionDir}`);
+            } catch (error) {
+                console.error(`[WhatsApp] Error cleaning up session data:`, error);
+            }
+        }
     }
 
     async disconnectSession(sessionId: string) {

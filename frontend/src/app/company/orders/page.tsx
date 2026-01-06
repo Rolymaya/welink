@@ -312,25 +312,58 @@ export default function OrdersPage() {
                             )}
 
                             {/* Actions */}
-                            {selectedOrder.status === 'PENDING' && (
-                                <div className="flex gap-2">
+                            {/* Actions */}
+                            <div className="flex gap-2 flex-wrap">
+                                {selectedOrder.status === 'PENDING' && (
+                                    <>
+                                        <Button
+                                            className="flex-1"
+                                            onClick={() => setActionDialog('approve')}
+                                        >
+                                            <Check className="mr-2 h-4 w-4" />
+                                            Aprovar Pedido
+                                        </Button>
+                                        <Button
+                                            variant="destructive"
+                                            className="flex-1"
+                                            onClick={() => setActionDialog('reject')}
+                                        >
+                                            <X className="mr-2 h-4 w-4" />
+                                            Rejeitar Pedido
+                                        </Button>
+                                    </>
+                                )}
+
+                                {selectedOrder.status === 'AWAITING_PAYMENT' && (
                                     <Button
-                                        className="flex-1"
-                                        onClick={() => setActionDialog('approve')}
+                                        className="w-full bg-blue-600 hover:bg-blue-700"
+                                        onClick={() => handleStatusUpdate(selectedOrder.id, 'PROCESSING')}
                                     >
-                                        <Check className="mr-2 h-4 w-4" />
-                                        Aprovar Pedido
+                                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                                        Confirmar Pagamento
                                     </Button>
+                                )}
+
+                                {selectedOrder.status === 'PROCESSING' && (
                                     <Button
-                                        variant="destructive"
-                                        className="flex-1"
-                                        onClick={() => setActionDialog('reject')}
+                                        className="w-full bg-orange-600 hover:bg-orange-700"
+                                        onClick={() => handleStatusUpdate(selectedOrder.id, 'SHIPPED')}
                                     >
-                                        <X className="mr-2 h-4 w-4" />
-                                        Rejeitar Pedido
+                                        <Truck className="mr-2 h-4 w-4" />
+                                        Marcar como Enviado
                                     </Button>
-                                </div>
-                            )}
+                                )}
+
+                                {selectedOrder.status === 'SHIPPED' && (
+                                    <Button
+                                        className="w-full bg-green-600 hover:bg-green-700"
+                                        onClick={() => handleStatusUpdate(selectedOrder.id, 'COMPLETED')}
+                                    >
+                                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                                        Marcar como Entregue
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     )}
                 </DialogContent>
