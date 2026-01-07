@@ -41,9 +41,9 @@ export class StorageController {
             throw new BadRequestException('Nenhum arquivo enviado');
         }
         // Return the public URL
-        // The backend serves /uploads from the root uploads directory via ServeStaticModule
+        const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
         return {
-            url: `http://localhost:3001/uploads/${file.filename}`,
+            url: `${backendUrl}/uploads/${file.filename}`,
             filename: file.filename,
         };
     }
