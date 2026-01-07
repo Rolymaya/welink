@@ -297,7 +297,8 @@ INSTRUÇÃO DE BUSCA E CONFIANÇA:
 
         const lastMessage = messages.data[0];
         if (lastMessage && lastMessage.content[0].type === 'text') {
-            return lastMessage.content[0].text.value;
+            // Remove as anotações de fonte da OpenAI (ex: 【56:1†source】)
+            return lastMessage.content[0].text.value.replace(/【.*?】/g, '').trim();
         }
 
         return 'Não consegui processar a resposta.';

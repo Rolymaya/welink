@@ -82,7 +82,8 @@ export class HybridAgentService {
                             break;
                         case 'send_response':
                             output = await this.agentTools.sendResponse(args.text);
-                            finalMessage = args.text; // Captura a mensagem final
+                            // Limpa as anotações de fonte da OpenAI (ex: 【56:1†source】)
+                            finalMessage = args.text.replace(/【.*?】/g, '').trim();
                             break;
                         default:
                             output = { error: 'Ferramenta não encontrada' };
