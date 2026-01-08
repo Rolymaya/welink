@@ -77,16 +77,17 @@ export class ProductsService {
         });
     }
 
-    // AI Agent Tool: Search products by name/description
+    // AI Agent Tool: Search products by name/description/category
     async searchProducts(organizationId: string, query: string, category?: string) {
         return this.prisma.product.findMany({
             where: {
                 organizationId,
                 isActive: true,
-                ...(category ? { category } : {}),
                 OR: [
                     { name: { contains: query } },
                     { description: { contains: query } },
+                    { category: { contains: query } },
+                    ...(category ? [{ category: { contains: category } }] : []),
                 ],
             },
             select: {
