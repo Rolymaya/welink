@@ -164,6 +164,9 @@ INSTRUÇÃO DE BUSCA E CONFIANÇA:
         const openai = await this.getClient();
         const threadId = await this.getOrCreateConversation(contactId);
 
+        // Limpar Runs ativos antes de processar a nova mensagem para evitar erro 400
+        await this.cleanupActiveRuns(threadId);
+
         const agent = await this.prisma.agent.findUnique({
             where: { id: agentId },
             include: { organization: true }
@@ -284,6 +287,39 @@ INSTRUÇÃO DE BUSCA E CONFIANÇA:
         });
 
         this.logger.log(`Assistant ${agent.openaiAssistantId} vinculado ao Vector Store ${vectorStoreId}`);
+    }
+
+    /**
+     * Cancela qualquer Run ativo na Thread para evitar o erro 400 da OpenAI
+     */
+    private async cleanupActiveRuns(threadId: string): Promise<void> {
+        const openai = await this.getClient();
+        try {
+            const runs = await openai.beta.threads.runs.list(threadId);
+            const activeRuns = runs.data.filter(run =>
+                ['in_progress', 'queued', 'requires_action'].includes(run.status)
+            );
+
+            for (const run of activeRuns) {
+                this.logger.warn(`[OpenAI] Cancelando Run ativo ${run.id} na Thread ${threadId} para permitir nova mensagem.`);
+                try {
+                    await openai.beta.threads.runs.cancel(threadId, run.id);
+
+                    // Pequeno polling para garantir que o status mudou para 'cancelled' antes de prosseguir
+                    let retries = 5;
+                    while (retries > 0) {
+                        const updatedRun = await openai.beta.threads.runs.retrieve(threadId, run.id);
+                        if (['cancelled', 'expired', 'failed', 'completed'].includes(updatedRun.status)) break;
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        retries--;
+                    }
+                } catch (cancelError) {
+                    this.logger.error(`[OpenAI] Erro ao cancelar Run ${run.id}: ${cancelError.message}`);
+                }
+            }
+        } catch (error) {
+            this.logger.error(`[OpenAI] Erro ao listar Runs para cleanup: ${error.message}`);
+        }
     }
 
     /**
