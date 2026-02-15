@@ -272,7 +272,7 @@ export default function SubscriptionsPage() {
                                         <TableCell>
                                             {sub.paymentProofUrl ? (
                                                 <a
-                                                    href={buildApiUrl(`"${sub.paymentProofUrl}`)}
+                                                    href={buildApiUrl(sub.paymentProofUrl)}
                                                     download
                                                     className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
                                                 >
