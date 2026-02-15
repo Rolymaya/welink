@@ -20,7 +20,7 @@ import { EmailModule } from '../email/email.module';
         forwardRef(() => SuperAdminModule),
         forwardRef(() => LLMModule),
         forwardRef(() => AgendaModule),
-        SubscriptionsModule,
+        forwardRef(() => SubscriptionsModule),
         ProductsModule,
         EmailModule,
     ],

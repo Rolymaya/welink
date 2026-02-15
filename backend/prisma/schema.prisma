@@ -80,6 +80,7 @@ model Organization {
   agents        Agent[]
   knowledgeBases KnowledgeBase[]
   contacts      Contact[]
+  contactDirectory ContactDirectory[]
   agendas       Agenda[]
   subscriptions Subscription[]
   transactions  Transaction[]
@@ -296,6 +297,25 @@ model Contact {
 
   @@unique([organizationId, phone])
 }
+
+// Contact Directory - Base de Contactos (shown in /contacts page)
+// This table is separate from Contact to allow subscription limit enforcement
+// while keeping message processing functional
+model ContactDirectory {
+  id            String       @id @default(uuid())
+  phone         String
+  name          String?
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  tags          String       @default("")
+  
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@unique([organizationId, phone])
+  @@index([organizationId])
+}
+
 
 model Message {
   id            String      @id @default(uuid())

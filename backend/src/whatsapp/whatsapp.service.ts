@@ -37,6 +37,8 @@ export class WhatsAppService implements OnModuleInit {
         private agentToolsService: AgentToolsService,
         private hybridAgent: HybridAgentService,
         private emailService: EmailService,
+        @Inject(forwardRef(() => require('../subscriptions/subscriptions.service').SubscriptionsService))
+        private subscriptionsService: any,
     ) { }
 
     async onModuleInit() {
@@ -291,7 +293,6 @@ export class WhatsAppService implements OnModuleInit {
             },
         });
 
-
         if (!contact) {
             console.log(`[WhatsApp] Creating new contact: ${whatsappNumber}`);
             contact = await this.prisma.contact.create({
@@ -305,6 +306,47 @@ export class WhatsAppService implements OnModuleInit {
         }
 
         console.log('[WhatsApp] Contact found/created:', contact.id);
+
+        // 2.5. Add to ContactDirectory (Base de Contactos) - with limit check
+        console.log('[WhatsApp] Step 2.5: Checking ContactDirectory...');
+        const existsInDirectory = await this.prisma.contactDirectory.findFirst({
+            where: {
+                phone: whatsappNumber,
+                organizationId,
+            },
+        });
+
+        if (!existsInDirectory) {
+            console.log('[WhatsApp] Contact not in directory. Checking subscription limits...');
+
+            // Check subscription and limits
+            const subscription = await this.subscriptionsService.getActiveSubscription(organizationId);
+
+            if (subscription) {
+                const usage = await this.subscriptionsService.getUsage(organizationId);
+                const limits = {
+                    maxContacts: subscription.organization?.maxContacts ?? subscription.package.maxContacts,
+                };
+
+                if (usage.contacts < limits.maxContacts) {
+                    console.log(`[WhatsApp] Adding to ContactDirectory (${usage.contacts + 1}/${limits.maxContacts})`);
+                    await this.prisma.contactDirectory.create({
+                        data: {
+                            phone: whatsappNumber,
+                            name: msg.pushName || 'Unknown',
+                            organizationId,
+                            tags: '',
+                        },
+                    });
+                } else {
+                    console.log(`[WhatsApp] Contact limit reached (${usage.contacts}/${limits.maxContacts}). NOT adding to ContactDirectory.`);
+                }
+            } else {
+                console.log('[WhatsApp] No active subscription. NOT adding to ContactDirectory.');
+            }
+        } else {
+            console.log('[WhatsApp] Contact already in directory.');
+        }
 
         // 3. Save incoming message (ALWAYS, even if agent is disabled)
         console.log('[WhatsApp] Step 3: Saving incoming message...');

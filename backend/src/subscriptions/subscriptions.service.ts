@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger, OnModuleInit, Inject } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { PrismaService } from '../prisma/prisma.service';
@@ -16,6 +16,8 @@ export class SubscriptionsService implements OnModuleInit {
         @Inject(SchedulerRegistry) private schedulerRegistry: SchedulerRegistry,
         @Inject(EmailService) private emailService: EmailService,
         @Inject(AffiliatesService) private affiliatesService: AffiliatesService,
+        @Inject(forwardRef(() => require('../whatsapp/whatsapp.service').WhatsAppService))
+        private whatsappService: any,
     ) { }
 
     async onModuleInit() {
@@ -256,7 +258,7 @@ export class SubscriptionsService implements OnModuleInit {
             this.prisma.session.count({
                 where: { agent: { organizationId } },
             }),
-            this.prisma.contact.count({ where: { organizationId } }),
+            this.prisma.contactDirectory.count({ where: { organizationId } }),
         ]);
 
         return {
@@ -360,6 +362,25 @@ export class SubscriptionsService implements OnModuleInit {
                             maxContacts: 0,
                         },
                     });
+
+                    // DELETE all active WhatsApp sessions for this organization
+                    this.logger.log(`[Subscription Expiration] Deleting active sessions for organization: ${sub.organizationId}`);
+
+                    const sessions = await this.prisma.session.findMany({
+                        where: {
+                            agent: { organizationId: sub.organizationId },
+                            status: 'CONNECTED',
+                        },
+                    });
+
+                    for (const session of sessions) {
+                        try {
+                            this.logger.log(`[Subscription Expiration] Deleting session: ${session.id}`);
+                            await this.whatsappService.deleteSession(session.id);
+                        } catch (error) {
+                            this.logger.error(`[Subscription Expiration] Failed to delete session ${session.id}: ${error.message}`);
+                        }
+                    }
                 }
 
                 this.logger.log(`[Subscription Expiration] Reset limits for ${expiredSubs.length} organization(s)`);
